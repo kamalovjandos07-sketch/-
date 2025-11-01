@@ -1,4 +1,4 @@
-# app.py
+ # app.py
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -6,20 +6,36 @@ import io
 import json
 import datetime
 import plotly.express as px
+from PIL import Image
 
 st.set_page_config(page_title="AI — Микробиом (КОЕ/г)",
                    page_icon="🧫", layout="centered")
 
-# Header с эмблемой университета
-st.markdown(
-    """
-    <div style="text-align:center">
-        <h3>Медицинский университет имени С. Д. Асфендиярова 🏥</h3>
-        <div style="font-size:16px"><b>Камалов Жандос — Мед24-015</b></div>
-    </div>
-    <hr>
-    """, unsafe_allow_html=True
-)
+# Загрузка эмблемы университета
+try:
+    emblem = Image.open("logo.png")
+except:
+    emblem = None
+
+# Header с настоящей эмблемой университета
+col1, col2 = st.columns([1, 4])
+with col1:
+    if emblem:
+        st.image(emblem, width=80)
+    else:
+        st.write("🏛️")
+
+with col2:
+    st.markdown(
+        """
+        <div style="padding-top: 10px;">
+            <h3>Медицинский университет имени С. Д. Асфендиярова</h3>
+            <div style="font-size:16px"><b>Камалов Жандос — Мед24-015</b></div>
+        </div>
+        """, unsafe_allow_html=True
+    )
+
+st.markdown("<hr>", unsafe_allow_html=True)
 
 st.title("🧬 Симулятор состава кишечного микробиома (КОЕ/г)")
 
@@ -314,7 +330,7 @@ report = {
     "results": {row["Bacteria"]: row["Simulated (KOE/g)"] for _, row in df.iterrows()},
     "conclusion": conclusion_text
 }
-report_txt = f"Отчёт по симуляции\nАвтор: {report['author']} ({report['group']})\n{report['university']} 🏥\nДата (UTC): {report['datetime']}\n\nФакторы: {', '.join(factors) if factors else '—'}\n\nРезультаты (Simulated КОЕ/г):\n"
+report_txt = f"Отчёт по симуляции\nАвтор: {report['author']} ({report['group']})\n{report['university']}\nДата (UTC): {report['datetime']}\n\nФакторы: {', '.join(factors) if factors else '—'}\n\nРезультаты (Simulated КОЕ/г):\n"
 for k, v in report["results"].items():
     report_txt += f" - {k}: {v:.3e} КОЕ/г\n"
 report_txt += "\n" + report["conclusion"]
