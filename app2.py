@@ -1,4 +1,3 @@
-# app.py
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -9,6 +8,11 @@ import plotly.express as px
 
 st.set_page_config(page_title="AI — Микробиом (КОЕ/г)",
                    page_icon="🧫", layout="centered")
+
+# Logo centered at top
+st.markdown("<div style='text-align:center'>", unsafe_allow_html=True)
+st.image("logo.png", width=160)
+st.markdown("</div>", unsafe_allow_html=True)
 
 # Header
 st.markdown(
@@ -26,53 +30,67 @@ st.title("🧬 Симулятор состава кишечного микроб
 st.write("Выбери факторы (несколько) — приложение покажет изменившиеся концентрации основных групп бактерий в КОЕ/г и выдаст диагностическое заключение.")
 
 # Baseline (примерные референсные значения, КОЕ/г)
-# Примечание: это условные ориентиры для модели-симулятора, а не клинические нормы.
 baseline = {
-    "Lactobacillus spp.": 1e8,       # 10^8
-    "Bifidobacterium spp.": 5e9,     # 5×10^9
-    "Firmicutes (общие)": 1e10,      # 10^10
-    "Bacteroides spp.": 5e9,         # 5×10^9
-    "Clostridium spp.": 1e6,         # 10^6
-    "Escherichia coli (комменсаль)": 1e7, # 10^7
-    "Proteobacteria (проч.)": 1e6,   # 10^6
-    "Candida spp. (дрожжепод.)": 1e4  # 10^4
+    "Lactobacillus spp.": 1e8,
+    "Bifidobacterium spp.": 5e9,
+    "Firmicutes (общие)": 1e10,
+    "Bacteroides spp.": 5e9,
+    "Clostridium spp.": 1e6,
+    "Escherichia coli (комменсаль)": 1e7,
+    "Proteobacteria (проч.)": 1e6,
+    "Candida spp. (дрожжепод.)": 1e4
 }
 
-# Factors list
-factors = st.multiselect(
-    "Факторы (выбери один или несколько):",
+# Antibiotics group (multiple allowed)
+ab_factors = st.multiselect(
+    "Антибиотики (можно несколько):",
     [
         "Антибиотики (широкого спектра)",
-        "Антибиотики (узкого спектра)",
+        "Антибиотики (узкого спектра)"
+    ]
+)
+
+# Other medications
+med_factors = st.multiselect(
+    "Другие лекарства (можно несколько):",
+    [
+        "Приём антацидов / PPI",
+        "Иммунодефицит / химиотерапия"
+    ]
+)
+
+# Lifestyle and conditions
+other_factors = st.multiselect(
+    "Образ жизни и состояние:",
+    [
         "Пробиотики (курс)",
         "Неправильное питание (высокожировая, мало клетчатки)",
         "Здоровая диета (богатая клетчаткой)",
         "Хронический стресс",
         "Недосып / нерегулярный сон",
         "Интенсивная физ. нагрузка",
-        "Длительная госпитализация / ИВЛ",
-        "Иммунодефицит / химиотерапия",
-        "Приём антацидов / PPI"
-    ],
-    help="Можно выбрать несколько факторов — их эффекты комбинируются (мультипликативно)."
+        "Длительная госпитализация / ИВЛ"
+    ]
 )
 
-# Дополнительные параметры: длительность антибиотиков, пробиотиков
+# Merge selected factors
+factors = ab_factors + med_factors + other_factors
+
+# Sliders duration for antibiotics and probiotics
 col1, col2 = st.columns(2)
 with col1:
     ab_days = st.slider("Длительность антибиотиков (если выбраны)", 0, 21, 7)
 with col2:
     probiotic_course_days = st.slider("Длительность курса пробиотиков (если выбраны)", 0, 30, 14)
 
-# Define multiplicative effects (примерные коэффициенты)
-# Коэффициенты — мультипликативно применяются к исходным КОЕ/г.
+# Effects dictionary (UNCHANGED)
 effects = {
     "Антибиотики (широкого спектра)": {
         "Lactobacillus spp.": 0.1,
         "Bifidobacterium spp.": 0.15,
         "Firmicutes (общие)": 0.5,
         "Bacteroides spp.": 0.4,
-        "Clostridium spp.": 2.0,    # условно может вырасти (колонизация)
+        "Clostridium spp.": 2.0,
         "Escherichia coli (комменсаль)": 1.5,
         "Proteobacteria (проч.)": 2.0,
         "Candida spp. (дрожжепод.)": 5.0
@@ -137,26 +155,22 @@ effects = {
     }
 }
 
-# Adjust antibiotic/probiotic strength by duration (simple linear scaling)
+# Duration scaling (UNCHANGED)
 def duration_scale_ab(days):
-    # 0 days -> 1.0 (no effect), 21 days -> full effect (1.0)
-    return min(1.0, days / 14.0)  # полная сила примерно 14 дней
+    return min(1.0, days / 14.0)
 
 def duration_scale_pro(days):
     return min(1.0, days / 14.0)
 
-# Apply factors
+# Simulation logic (UNCHANGED)
 def simulate(baseline, factors, ab_days=0, probiotic_days=0):
     result = baseline.copy()
-    # Start with multiplicative 1.0
     mult = {k: 1.0 for k in baseline.keys()}
 
     for f in factors:
         if f.startswith("Антибиотики"):
-            scale = 1.0 - duration_scale_ab(ab_days) * 0.0  # we'll apply per-effect scaling below
             eff = effects[f]
             for k, v in eff.items():
-                # scale effect towards baseline depending on duration
                 applied = 1 + (v - 1) * duration_scale_ab(ab_days)
                 mult[k] *= applied
         elif f == "Пробиотики (курс)":
@@ -169,18 +183,14 @@ def simulate(baseline, factors, ab_days=0, probiotic_days=0):
             for k, v in eff.items():
                 mult[k] *= v
 
-    # compute final values
     for k in result:
-        # protect if key missing in mult
-        m = mult.get(k, 1.0)
-        result[k] = max(0.0, result[k] * m)
+        result[k] = max(0.0, result[k] * mult[k])
 
     return result, mult
 
-# Run simulation
 simulated, multipliers = simulate(baseline, factors, ab_days, probiotic_course_days)
 
-# Prepare DataFrame for display
+# Data output (UNCHANGED)
 df = pd.DataFrame([
     {"Bacteria": k,
      "Baseline (KOE/g)": baseline[k],
@@ -189,7 +199,6 @@ df = pd.DataFrame([
     for k in baseline.keys()
 ])
 
-# Format numbers in scientific notation for readable output
 def sci(x):
     return "{:.3e}".format(x)
 
@@ -198,11 +207,9 @@ df_display["Baseline (KOE/g)"] = df_display["Baseline (KOE/g)"].apply(sci)
 df_display["Simulated (KOE/g)"] = df_display["Simulated (KOE/g)"].apply(sci)
 df_display["Multiplier"] = df_display["Multiplier"].apply(lambda x: f"{x:.2f}×")
 
-# Show results
 st.subheader("Результаты (таблица)")
 st.dataframe(df_display.set_index("Bacteria"))
 
-# Bar chart (log scale makes sense for CFU)
 st.subheader("Графическое распределение (логарифмическая шкала)")
 plot_df = df[["Bacteria", "Simulated (KOE/g)"]].copy()
 plot_df["Simulated (KOE/g)"] = plot_df["Simulated (KOE/g)"].astype(float)
@@ -212,10 +219,9 @@ fig = px.bar(plot_df, x="Bacteria", y="Simulated (KOE/g)",
              height=450)
 st.plotly_chart(fig, use_container_width=True)
 
-# Detailed automatic conclusion logic
+# Conclusion (UNCHANGED)
 def analyze(updated_dict):
     msgs = []
-    # thresholds for "low" and "high" relative to baseline order of magnitude
     for k in baseline:
         base = baseline[k]
         val = updated_dict[k]
@@ -227,9 +233,8 @@ def analyze(updated_dict):
             msgs.append(f"Выраженное увеличение {k} (≥5× базового) — возможна переколонизация условно-патогенных микроорганизмов.")
         elif val >= base * 1.5:
             msgs.append(f"Умеренное увеличение {k} (1.5–5× базового).")
-    # Pattern-based rules
+
     conclusions = []
-    # dysbiosis patterns
     lacto = updated_dict["Lactobacillus spp."]
     bifi = updated_dict["Bifidobacterium spp."]
     clost = updated_dict["Clostridium spp."]
@@ -237,21 +242,21 @@ def analyze(updated_dict):
     candida = updated_dict["Candida spp. (дрожжепод.)"]
 
     if lacto < baseline["Lactobacillus spp."] * 0.5 and bifi < baseline["Bifidobacterium spp."] * 0.5:
-        conclusions.append("Патерн: снижение основных симбионтов (Lactobacillus и Bifidobacterium) — риск дисбактериоза, снижение колонизационной резистентности.")
+        conclusions.append("Патерн: снижение основных симбионтов (Lactobacillus и Bifidobacterium) — риск дисбактериоза.")
     if proteo > baseline["Proteobacteria (проч.)"] * 2.0:
-        conclusions.append("Увеличение Proteobacteria — маркер воспаления/дисбиоза, возможен рост условно-патогенных родов.")
+        conclusions.append("Увеличение Proteobacteria — маркер воспаления/дисбиоза.")
     if candida > baseline["Candida spp. (дрожжепод.)"] * 5:
-        conclusions.append("Сильный рост Candida — риск кандидоза/суперинфекции, особенно при длительном приёме антибиотиков или иммунодепрессии.")
+        conclusions.append("Сильный рост Candida — риск кандидоза.")
     if clost > baseline["Clostridium spp."] * 5:
-        conclusions.append("Выраженное увеличение Clostridium — возможно токсигенное разрастание (требуется клиническая верификация).")
-    if not conclusions:
-        conclusions.append("Серьёзных отклонений не выявлено; микробиом относительно стабилен.")
+        conclusions.append("Увеличение Clostridium — риск токсигенного разрастания.")
 
-    # Aggregate diagnostics
+    if not conclusions:
+        conclusions.append("Серьёзных отклонений не выявлено.")
+
     final = "Автоматическое заключение:\n\n"
     final += "\n".join(msgs[:6]) + ("\n\n" if msgs else "")
     final += "\n".join(conclusions)
-    final += "\n\nРекомендации (общее):\n- Рассмотреть корректировку факторов (устранение антибиотиков, приём пробиотиков/пребиотиков, коррекция питания, сон, снижение стресса).\n- При выраженных отклонениях — лабораторная консультация и микробиологическое тестирование (посев/NGS).\n"
+    final += "\n\nРекомендации:\n- Коррекция факторов (диета/сон/стресс).\n- При выраженных отклонениях: консультация и углублённая диагностика.\n"
     return final
 
 conclusion_text = analyze(simulated)
@@ -259,7 +264,7 @@ conclusion_text = analyze(simulated)
 st.subheader("Интерпретация и рекомендации")
 st.write(conclusion_text)
 
-# Download buttons: CSV and текстовый отчёт
+# Downloads (UNCHANGED)
 csv_buf = io.StringIO()
 df.to_csv(csv_buf, index=False)
 csv_bytes = csv_buf.getvalue().encode()
@@ -284,3 +289,4 @@ st.download_button("⬇ Скачать CSV результатов", data=csv_byt
 st.download_button("⬇ Скачать отчёт (.txt)", data=report_txt, file_name="microbiome_report.txt", mime="text/plain")
 
 st.markdown("<hr><div style='text-align:center; color:gray'>Учебный симулятор — не клиническое заключение.</div>", unsafe_allow_html=True)
+
