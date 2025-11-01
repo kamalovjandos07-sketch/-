@@ -1,4 +1,44 @@
-# app.py
+# aimport streamlit as st
+import plotly.express as px
+
+# Настройка страницы
+st.set_page_config(page_title="Микробиом человека", page_icon="🧫", layout="centered")
+
+# Фон страницы
+page_bg = """
+<style>
+[data-testid="stAppViewContainer"] {
+    background-color: #e8f4fb;
+}
+h1, h2, h3, h4 {
+    text-align: center;
+    color: #003366;
+}
+p {
+    text-align: center;
+    color: #002244;
+}
+</style>
+"""
+st.markdown(page_bg, unsafe_allow_html=True)
+
+# Логотип и заголовок
+st.image(
+    "https://upload.wikimedia.org/wikipedia/commons/6/6b/Asfendiyarov_KazNMU_logo.png",
+    width=150
+)
+
+st.markdown("""
+### Медицинский университет имени С.Д. Асфендиярова  
+#### Кафедра микробиологии и вирусологии  
+##### Руководитель проекта: PhD, доцент Игисенова А.И.  
+##### Автор: Камалов Жандос, Мед24-015  
+""")
+
+st.write("---")
+st.title("🧬 Модель микробиома человека с помощью ИИ")
+st.write("Выберите факторы, влияющие на микрофлору, чтобы оценить изменения в составе бактерий.")
+pp.py
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -284,3 +324,4 @@ st.download_button("⬇️ Скачать CSV результатов", data=csv_
 st.download_button("⬇️ Скачать отчёт (.txt)", data=report_txt, file_name="microbiome_report.txt", mime="text/plain")
 
 st.markdown("<hr><div style='text-align:center; color:gray'>Учебный симулятор — не клиническое заключение.</div>", unsafe_allow_html=True)
+
