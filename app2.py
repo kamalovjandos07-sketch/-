@@ -10,11 +10,11 @@ import plotly.express as px
 st.set_page_config(page_title="AI — Микробиом (КОЕ/г)",
                    page_icon="🧫", layout="centered")
 
-# Header
+# Header с эмблемой университета
 st.markdown(
     """
     <div style="text-align:center">
-        <h3>Медицинский университет имени С. Д. Асфендиярова</h3>
+        <h3>Медицинский университет имени С. Д. Асфендиярова 🏥</h3>
         <div style="font-size:16px"><b>Камалов Жандос — Мед24-015</b></div>
     </div>
     <hr>
@@ -38,12 +38,16 @@ baseline = {
     "Candida spp. (дрожжепод.)": 1e4  # 10^4
 }
 
-# Factors list
+# Factors list с конкретными антибиотиками
 factors = st.multiselect(
     "Факторы (выбери один или несколько):",
     [
-        "Антибиотики (широкого спектра)",
-        "Антибиотики (узкого спектра)",
+        "Амоксициллин/клавуланат (Аугментин)",
+        "Цефтриаксон",
+        "Азитромицин",
+        "Левофлоксацин",
+        "Метронидазол",
+        "Ванкомицин (пероральный)",
         "Пробиотики (курс)",
         "Неправильное питание (высокожировая, мало клетчатки)",
         "Здоровая диета (богатая клетчаткой)",
@@ -64,28 +68,67 @@ with col1:
 with col2:
     probiotic_course_days = st.slider("Длительность курса пробиотиков (если выбраны)", 0, 30, 14)
 
-# Define multiplicative effects (примерные коэффициенты)
-# Коэффициенты — мультипликативно применяются к исходным КОЕ/г.
+# Define multiplicative effects с конкретными антибиотиками
 effects = {
-    "Антибиотики (широкого спектра)": {
+    "Амоксициллин/клавуланат (Аугментин)": {
         "Lactobacillus spp.": 0.1,
         "Bifidobacterium spp.": 0.15,
         "Firmicutes (общие)": 0.5,
         "Bacteroides spp.": 0.4,
-        "Clostridium spp.": 2.0,    # условно может вырасти (колонизация)
+        "Clostridium spp.": 2.0,
         "Escherichia coli (комменсаль)": 1.5,
         "Proteobacteria (проч.)": 2.0,
         "Candida spp. (дрожжепод.)": 5.0
     },
-    "Антибиотики (узкого спектра)": {
-        "Lactobacillus spp.": 0.6,
-        "Bifidobacterium spp.": 0.7,
+    "Цефтриаксон": {
+        "Lactobacillus spp.": 0.3,
+        "Bifidobacterium spp.": 0.4,
+        "Firmicutes (общие)": 0.7,
+        "Bacteroides spp.": 0.6,
+        "Clostridium spp.": 3.0,
+        "Escherichia coli (комменсаль)": 0.8,
+        "Proteobacteria (проч.)": 1.8,
+        "Candida spp. (дрожжепод.)": 4.0
+    },
+    "Азитромицин": {
+        "Lactobacillus spp.": 0.5,
+        "Bifidobacterium spp.": 0.6,
+        "Firmicutes (общие)": 0.8,
+        "Bacteroides spp.": 0.7,
+        "Clostridium spp.": 1.5,
+        "Escherichia coli (комменсаль)": 1.2,
+        "Proteobacteria (проч.)": 1.4,
+        "Candida spp. (дрожжепод.)": 2.0
+    },
+    "Левофлоксацин": {
+        "Lactobacillus spp.": 0.7,
+        "Bifidobacterium spp.": 0.8,
         "Firmicutes (общие)": 0.9,
-        "Bacteroides spp.": 0.9,
-        "Clostridium spp.": 1.1,
+        "Bacteroides spp.": 0.8,
+        "Clostridium spp.": 1.2,
+        "Escherichia coli (комменсаль)": 0.5,
+        "Proteobacteria (проч.)": 0.7,
+        "Candida spp. (дрожжепод.)": 1.8
+    },
+    "Метронидазол": {
+        "Lactobacillus spp.": 0.9,
+        "Bifidobacterium spp.": 0.9,
+        "Firmicutes (общие)": 1.0,
+        "Bacteroides spp.": 0.3,
+        "Clostridium spp.": 0.2,
         "Escherichia coli (комменсаль)": 1.1,
-        "Proteobacteria (проч.)": 1.2,
+        "Proteobacteria (проч.)": 1.0,
         "Candida spp. (дрожжепод.)": 1.5
+    },
+    "Ванкомицин (пероральный)": {
+        "Lactobacillus spp.": 1.0,
+        "Bifidobacterium spp.": 1.0,
+        "Firmicutes (общие)": 1.0,
+        "Bacteroides spp.": 1.0,
+        "Clostridium spp.": 0.1,
+        "Escherichia coli (комменсаль)": 1.0,
+        "Proteobacteria (проч.)": 1.0,
+        "Candida spp. (дрожжепод.)": 1.2
     },
     "Пробиотики (курс)": {
         "Lactobacillus spp.": 2.0,
@@ -139,8 +182,7 @@ effects = {
 
 # Adjust antibiotic/probiotic strength by duration (simple linear scaling)
 def duration_scale_ab(days):
-    # 0 days -> 1.0 (no effect), 21 days -> full effect (1.0)
-    return min(1.0, days / 14.0)  # полная сила примерно 14 дней
+    return min(1.0, days / 14.0)
 
 def duration_scale_pro(days):
     return min(1.0, days / 14.0)
@@ -148,15 +190,13 @@ def duration_scale_pro(days):
 # Apply factors
 def simulate(baseline, factors, ab_days=0, probiotic_days=0):
     result = baseline.copy()
-    # Start with multiplicative 1.0
     mult = {k: 1.0 for k in baseline.keys()}
 
     for f in factors:
-        if f.startswith("Антибиотики"):
-            scale = 1.0 - duration_scale_ab(ab_days) * 0.0  # we'll apply per-effect scaling below
+        if f in ["Амоксициллин/клавуланат (Аугментин)", "Цефтриаксон", "Азитромицин", 
+                "Левофлоксацин", "Метронидазол", "Ванкомицин (пероральный)"]:
             eff = effects[f]
             for k, v in eff.items():
-                # scale effect towards baseline depending on duration
                 applied = 1 + (v - 1) * duration_scale_ab(ab_days)
                 mult[k] *= applied
         elif f == "Пробиотики (курс)":
@@ -171,7 +211,6 @@ def simulate(baseline, factors, ab_days=0, probiotic_days=0):
 
     # compute final values
     for k in result:
-        # protect if key missing in mult
         m = mult.get(k, 1.0)
         result[k] = max(0.0, result[k] * m)
 
@@ -275,7 +314,7 @@ report = {
     "results": {row["Bacteria"]: row["Simulated (KOE/g)"] for _, row in df.iterrows()},
     "conclusion": conclusion_text
 }
-report_txt = f"Отчёт по симуляции\nАвтор: {report['author']} ({report['group']})\n{report['university']}\nДата (UTC): {report['datetime']}\n\nФакторы: {', '.join(factors) if factors else '—'}\n\nРезультаты (Simulated КОЕ/г):\n"
+report_txt = f"Отчёт по симуляции\nАвтор: {report['author']} ({report['group']})\n{report['university']} 🏥\nДата (UTC): {report['datetime']}\n\nФакторы: {', '.join(factors) if factors else '—'}\n\nРезультаты (Simulated КОЕ/г):\n"
 for k, v in report["results"].items():
     report_txt += f" - {k}: {v:.3e} КОЕ/г\n"
 report_txt += "\n" + report["conclusion"]
