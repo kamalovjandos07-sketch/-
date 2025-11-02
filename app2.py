@@ -69,7 +69,7 @@ st.markdown(
 )
 
 # Заголовок приложения
-st.markdown('<div class="section-header"><h1 style="margin:0; color:#006400;">🧬 Симулятор состава кишечного микробиома (КОЕ/г)</h1></div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header"><h1 style="margin:0; color:#006400;">Симулятор состава кишечного микробиома (КОЕ/г)</h1></div>', unsafe_allow_html=True)
 
 st.write("Выбери факторы (несколько) — приложение покажет изменившиеся концентрации основных групп бактерий в КОЕ/г и выдаст диагностическое заключение.")
 
@@ -86,7 +86,7 @@ baseline = {
 }
 
 # Factors list с конкретными антибиотиками
-st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">🔍 Выбор факторов влияния</h3></div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">Выбор факторов влияния</h3></div>', unsafe_allow_html=True)
 
 factors = st.multiselect(
     "**Факторы (выбери один или несколько):**",
@@ -111,7 +111,7 @@ factors = st.multiselect(
 )
 
 # Дополнительные параметры
-st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">⏱️ Параметры длительности</h3></div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">Параметры длительности</h3></div>', unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
 with col1:
@@ -243,7 +243,7 @@ df_display["Simulated (KOE/g)"] = df_display["Simulated (KOE/g)"].apply(sci)
 df_display["Multiplier"] = df_display["Multiplier"].apply(lambda x: f"{x:.2f}×")
 
 # Show results
-st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">📊 Результаты анализа</h3></div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">Результаты анализа</h3></div>', unsafe_allow_html=True)
 
 st.subheader("Таблица концентраций")
 st.dataframe(df_display.set_index("Bacteria"), use_container_width=True)
@@ -302,7 +302,7 @@ def analyze(updated_dict):
 
 conclusion_text = analyze(simulated)
 
-st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">📝 Интерпретация и рекомендации</h3></div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">Интерпретация и рекомендации</h3></div>', unsafe_allow_html=True)
 st.markdown(conclusion_text)
 
 # Download buttons
@@ -369,4 +369,5 @@ st.markdown(
     </div>
     """, unsafe_allow_html=True
 )
+
 
