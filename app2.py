@@ -351,11 +351,11 @@ report_txt += f"\n{report['conclusion']}"
 
 col1, col2 = st.columns(2)
 with col1:
-    st.download_button("📥 Скачать CSV результатов", data=csv_bytes, 
+    st.download_button("Скачать CSV результатов", data=csv_bytes, 
                       file_name="microbiome_results.csv", mime="text/csv",
                       use_container_width=True)
 with col2:
-    st.download_button("📥 Скачать полный отчёт", data=report_txt.encode('utf-8'),
+    st.download_button("Скачать полный отчёт", data=report_txt.encode('utf-8'),
                       file_name="microbiome_report.txt", mime="text/plain",
                       use_container_width=True)
 
@@ -369,6 +369,7 @@ st.markdown(
     </div>
     """, unsafe_allow_html=True
 )
+
 
 
 
