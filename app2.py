@@ -61,7 +61,7 @@ st.markdown(
 st.markdown(
     """
     <div class="medical-header">
-        <h2 style="margin:0; color:white; font-weight:bold;">🏥 Медицинский университет имени С. Д. Асфендиярова</h2>
+        <h2 style="margin:0; color:white; font-weight:bold;">Медицинский университет имени С. Д. Асфендиярова</h2>
         <div style="font-size:18px; margin-top:15px; font-weight:bold;">Камалов Жандос — Мед24-015</div>
         <div style="font-size:14px; margin-top:10px; opacity:0.9;">Кафедра микробиологии и вирусологии</div>
     </div>
@@ -369,5 +369,6 @@ st.markdown(
     </div>
     """, unsafe_allow_html=True
 )
+
 
 
