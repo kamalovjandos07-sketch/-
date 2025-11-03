@@ -3,14 +3,13 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import io
-import json
 import datetime
 import plotly.express as px
 
-st.set_page_config(page_title="AI — Микробиом (КОЕ/г)",
-                   page_icon="🧫", layout="centered")
+st.set_page_config(page_title="Клинический симулятор АБТ",
+                   page_icon="🩺", layout="centered")
 
-# Медицинский стиль - бело-зеленый
+# Медицинский стиль
 st.markdown(
     """
     <style>
@@ -35,48 +34,235 @@ st.markdown(
         border-left: 5px solid #228b22;
         margin: 20px 0 15px 0;
     }
-    .stButton>button {
-        background: linear-gradient(90deg, #228b22 0%, #32cd32 100%);
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 8px;
-        font-weight: bold;
+    .warning-box {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px 0;
     }
-    .stButton>button:hover {
-        background: linear-gradient(90deg, #006400 0%, #228b22 100%);
-        color: white;
-    }
-    .download-btn {
-        background: linear-gradient(90deg, #1e90ff 0%, #00bfff 100%) !important;
-    }
-    .download-btn:hover {
-        background: linear-gradient(90deg, #0066cc 0%, #0099cc 100%) !important;
+    .success-box {
+        background: #d1ecf1;
+        border: 1px solid #bee5eb;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px 0;
     }
     </style>
     """, unsafe_allow_html=True
 )
 
-# Красивый медицинский заголовок
+# Заголовок
 st.markdown(
     """
     <div class="medical-header">
-        <h2 style="margin:0; color:white; font-weight:bold;">Медицинский университет имени С. Д. Асфендиярова</h2>
+        <h2 style="margin:0; color:white; font-weight:bold;">🏥 Медицинский университет имени С. Д. Асфендиярова</h2>
         <div style="font-size:18px; margin-top:15px; font-weight:bold;">Камалов Жандос — Мед24-015</div>
-        <div style="font-size:14px; margin-top:10px; opacity:0.9;">Кафедра микробиологии и вирусологии</div>
+        <div style="font-size:14px; margin-top:10px; opacity:0.9;">Клинический симулятор рациональной антибиотикотерапии</div>
     </div>
     """, unsafe_allow_html=True
 )
 
-# Заголовок приложения
-st.markdown('<div class="section-header"><h1 style="margin:0; color:#006400;">Симулятор состава кишечного микробиома (КОЕ/г)</h1></div>', unsafe_allow_html=True)
+# Основной заголовок
+st.markdown('<div class="section-header"><h1 style="margin:0; color:#006400;">🩺 Клинический симулятор антибиотикотерапии</h1></div>', unsafe_allow_html=True)
 
-st.write("Выбери факторы (несколько) — приложение покажет изменившиеся концентрации основных групп бактерий в КОЕ/г и выдаст диагностическое заключение.")
+st.write("**Система оценки необходимости и подбора антибиотиков на основе клинической картины**")
 
-# Baseline (примерные референсные значения, КОЕ/г)
+# РАЗДЕЛ 1: ДИАГНОСТИКА ПАЦИЕНТА
+st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">🔍 Диагностика пациента</h3></div>', unsafe_allow_html=True)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.subheader("Клиническая картина")
+    symptoms = st.multiselect(
+        "Симптомы пациента:",
+        ["Лихорадка >38°C", "Озноб", "Кашель с гнойной мокротой", 
+         "Боль в горле с налетами", "Заложенность носа", "Насморк",
+         "Головная боль", "Слабость", "Одышка",
+         "Боль при мочеиспускании", "Частые позывы", "Кожные высыпания",
+         "Боль в ухе", "Диарея", "Тошнота/рвота"]
+    )
+    
+    temperature = st.slider("Температура тела (°C):", 36.0, 41.0, 37.0, 0.1)
+
+with col2:
+    st.subheader("Данные обследования")
+    
+    lab_data = st.selectbox(
+        "Результаты анализов:",
+        ["Не проводились", "Лейкоцитоз (>10×10⁹/л)", "Повышение СРБ (>5 мг/л)", 
+         "Посев: выявлен возбудитель", "Анализы в норме", "Лимфоцитоз"]
+    )
+    
+    diagnosis_presumptive = st.selectbox(
+        "Предполагаемый диагноз:",
+        ["ОРВИ", "Острый бронхит", "Пневмония", "Ангина/тонзиллит",
+         "Острый синусит", "Отит", "Инфекция МВП", 
+         "Кожная инфекция", "Кишечная инфекция", "Другое"]
+    )
+
+# РАЗДЕЛ 2: ОЦЕНКА НЕОБХОДИМОСТИ АНТИБИОТИКОВ
+st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">📊 Оценка необходимости антибиотикотерапии</h3></div>', unsafe_allow_html=True)
+
+def assess_antibiotic_need(symptoms, lab_data, diagnosis, temperature):
+    score = 0
+    recommendations = []
+    
+    # Критерии необходимости АБ
+    if temperature >= 38.5:
+        score += 2
+        recommendations.append("Высокая лихорадка (>38.5°C)")
+    
+    if "Лихорадка >38°C" in symptoms and temperature >= 38.0:
+        score += 1
+    
+    if "Кашель с гнойной мокротой" in symptoms:
+        score += 2
+        recommendations.append("Гнойная мокрота")
+    
+    if "Боль в горле с налетами" in symptoms:
+        score += 2
+        recommendations.append("Налеты на миндалинах")
+    
+    if lab_data in ["Лейкоцитоз (>10×10⁹/л)", "Повышение СРБ (>5 мг/л)"]:
+        score += 2
+        recommendations.append("Воспалительные изменения в анализах")
+    
+    if lab_data == "Посев: выявлен возбудитель":
+        score += 3
+        recommendations.append("Подтвержденный возбудитель")
+    
+    # Диагностические критерии
+    if diagnosis in ["Пневмония", "Ангина/тонзиллит", "Пиелонефрит"]:
+        score += 3
+        recommendations.append(f"Диагноз '{diagnosis}' требует АБТ")
+    
+    if diagnosis in ["Острый бронхит", "Острый синусит", "Отит"]:
+        score += 2
+        recommendations.append(f"Диагноз '{diagnosis}' - рассмотреть АБТ")
+    
+    if diagnosis == "ОРВИ":
+        score -= 2
+        recommendations.append("ОРВИ - антибиотики не показаны")
+    
+    # Оценка результата
+    if score >= 6:
+        return {
+            "decision": "🔴 Антибиотикотерапия ОБОСНОВАНА",
+            "score": score,
+            "recommendations": recommendations,
+            "color": "red"
+        }
+    elif score >= 3:
+        return {
+            "decision": "🟡 Рассмотреть антибиотики после дообследования",
+            "score": score, 
+            "recommendations": recommendations,
+            "color": "orange"
+        }
+    else:
+        return {
+            "decision": "🟢 Антибиотики НЕ ПОКАЗАНЫ - симптоматическая терапия",
+            "score": score,
+            "recommendations": recommendations,
+            "color": "green"
+        }
+
+assessment = assess_antibiotic_need(symptoms, lab_data, diagnosis_presumptive, temperature)
+
+# Отображение результата оценки
+if assessment["color"] == "red":
+    st.error(f"**Заключение:** {assessment['decision']}")
+elif assessment["color"] == "orange":
+    st.warning(f"**Заключение:** {assessment['decision']}")
+else:
+    st.success(f"**Заключение:** {assessment['decision']}")
+
+st.write(f"**Баллы по шкале:** {assessment['score']}/10")
+if assessment["recommendations"]:
+    st.write("**Критерии:**")
+    for rec in assessment["recommendations"]:
+        st.write(f"- {rec}")
+
+# РАЗДЕЛ 3: ПОДБОР АНТИБИОТИКОВ (только если показаны)
+if assessment["color"] in ["red", "orange"]:
+    st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">💊 Рекомендации по антибиотикотерапии</h3></div>', unsafe_allow_html=True)
+    
+    def recommend_antibiotics(diagnosis, symptoms):
+        recommendations = []
+        
+        if diagnosis == "Пневмония":
+            recommendations.append({
+                "drug": "Амоксициллин/клавуланат",
+                "dose": "875/125 мг 2 раза/сут",
+                "duration": "7-10 дней",
+                "reason": "Препарат выбора при внебольничной пневмонии"
+            })
+            recommendations.append({
+                "drug": "Азитромицин", 
+                "dose": "500 мг 1 раз/сут",
+                "duration": "3-5 дней",
+                "reason": "При подозрении на атипичную флору"
+            })
+            
+        elif diagnosis == "Ангина/тонзиллит":
+            recommendations.append({
+                "drug": "Амоксициллин",
+                "dose": "500 мг 3 раза/сут", 
+                "duration": "10 дней",
+                "reason": "Препарат выбора при стрептококковой ангине"
+            })
+            
+        elif diagnosis == "Инфекция МВП":
+            recommendations.append({
+                "drug": "Цефтриаксон",
+                "dose": "1 г 1 раз/сут в/м",
+                "duration": "7 дней", 
+                "reason": "При осложненных ИМП"
+            })
+            recommendations.append({
+                "drug": "Левофлоксацин",
+                "dose": "500 мг 1 раз/сут",
+                "duration": "5-7 дней",
+                "reason": "Альтернативный препарат"
+            })
+            
+        elif diagnosis in ["Острый бронхит", "Острый синусит", "Отит"]:
+            recommendations.append({
+                "drug": "Амоксициллин/клавуланат",
+                "dose": "625 мг 3 раза/сут",
+                "duration": "5-7 дней",
+                "reason": "При бактериальной этиологии"
+            })
+            
+        else:
+            recommendations.append({
+                "drug": "Требуется консультация специалиста",
+                "dose": "-",
+                "duration": "-", 
+                "reason": "Для уточнения тактики лечения"
+            })
+            
+        return recommendations
+    
+    ab_recommendations = recommend_antibiotics(diagnosis_presumptive, symptoms)
+    
+    for i, rec in enumerate(ab_recommendations, 1):
+        with st.container():
+            st.markdown(f"**Вариант {i}: {rec['drug']}**")
+            st.write(f"Дозировка: {rec['dose']}")
+            st.write(f"Длительность: {rec['duration']}") 
+            st.write(f"Обоснование: {rec['reason']}")
+            st.markdown("---")
+
+# РАЗДЕЛ 4: СИМУЛЯТОР ВОЗДЕЙСТВИЯ НА МИКРОБИОМ
+st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">🧬 Влияние на микробиом</h3></div>', unsafe_allow_html=True)
+
+# Baseline микробиома
 baseline = {
     "Lactobacillus spp.": 1e8,
-    "Bifidobacterium spp.": 5e9,
+    "Bifidobacterium spp.": 5e9, 
     "Firmicutes (общие)": 1e10,
     "Bacteroides spp.": 5e9,
     "Clostridium spp.": 1e6,
@@ -85,291 +271,88 @@ baseline = {
     "Candida spp. (дрожжепод.)": 1e4
 }
 
-# Factors list с конкретными антибиотиками
-st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">Выбор факторов влияния</h3></div>', unsafe_allow_html=True)
-
-factors = st.multiselect(
-    "**Факторы (выбери один или несколько):**",
-    [
-        "Амоксициллин/клавуланат (Аугментин)",
-        "Цефтриаксон",
-        "Азитромицин",
-        "Левофлоксацин",
-        "Метронидазол",
-        "Ванкомицин (пероральный)",
-        "Пробиотики (курс)",
-        "Неправильное питание (высокожировая, мало клетчатки)",
-        "Здоровая диета (богатая клетчаткой)",
-        "Хронический стресс",
-        "Недосып / нерегулярный сон",
-        "Интенсивная физ. нагрузка",
-        "Длительная госпитализация / ИВЛ",
-        "Иммунодефицит / химиотерапия",
-        "Приём антацидов / PPI"
-    ],
-    help="Можно выбрать несколько факторов — их эффекты комбинируются (мультипликативно)."
-)
-
-# Дополнительные параметры
-st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">Параметры длительности</h3></div>', unsafe_allow_html=True)
-
-col1, col2 = st.columns(2)
-with col1:
-    ab_days = st.slider("**Длительность антибиотиков (дни):**", 0, 21, 7, help="Продолжительность курса антибиотикотерапии")
-with col2:
-    probiotic_course_days = st.slider("**Длительность пробиотиков (дни):**", 0, 30, 14, help="Продолжительность приёма пробиотиков")
-
-# Define multiplicative effects с конкретными антибиотиками
+# Эффекты антибиотиков
 effects = {
-    "Амоксициллин/клавуланат (Аугментин)": {
+    "Амоксициллин/клавуланат": {
         "Lactobacillus spp.": 0.1, "Bifidobacterium spp.": 0.15, "Firmicutes (общие)": 0.5,
         "Bacteroides spp.": 0.4, "Clostridium spp.": 2.0, "Escherichia coli (комменсаль)": 1.5,
         "Proteobacteria (проч.)": 2.0, "Candida spp. (дрожжепод.)": 5.0
-    },
-    "Цефтриаксон": {
-        "Lactobacillus spp.": 0.3, "Bifidobacterium spp.": 0.4, "Firmicutes (общие)": 0.7,
-        "Bacteroides spp.": 0.6, "Clostridium spp.": 3.0, "Escherichia coli (комменсаль)": 0.8,
-        "Proteobacteria (проч.)": 1.8, "Candida spp. (дрожжепод.)": 4.0
     },
     "Азитромицин": {
         "Lactobacillus spp.": 0.5, "Bifidobacterium spp.": 0.6, "Firmicutes (общие)": 0.8,
         "Bacteroides spp.": 0.7, "Clostridium spp.": 1.5, "Escherichia coli (комменсаль)": 1.2,
         "Proteobacteria (проч.)": 1.4, "Candida spp. (дрожжепод.)": 2.0
     },
+    "Цефтриаксон": {
+        "Lactobacillus spp.": 0.3, "Bifidobacterium spp.": 0.4, "Firmicutes (общие)": 0.7,
+        "Bacteroides spp.": 0.6, "Clostridium spp.": 3.0, "Escherichia coli (комменсаль)": 0.8,
+        "Proteobacteria (проч.)": 1.8, "Candida spp. (дрожжепод.)": 4.0
+    },
     "Левофлоксацин": {
         "Lactobacillus spp.": 0.7, "Bifidobacterium spp.": 0.8, "Firmicutes (общие)": 0.9,
         "Bacteroides spp.": 0.8, "Clostridium spp.": 1.2, "Escherichia coli (комменсаль)": 0.5,
         "Proteobacteria (проч.)": 0.7, "Candida spp. (дрожжепод.)": 1.8
-    },
-    "Метронидазол": {
-        "Lactobacillus spp.": 0.9, "Bifidobacterium spp.": 0.9, "Firmicutes (общие)": 1.0,
-        "Bacteroides spp.": 0.3, "Clostridium spp.": 0.2, "Escherichia coli (комменсаль)": 1.1,
-        "Proteobacteria (проч.)": 1.0, "Candida spp. (дрожжепод.)": 1.5
-    },
-    "Ванкомицин (пероральный)": {
-        "Lactobacillus spp.": 1.0, "Bifidobacterium spp.": 1.0, "Firmicutes (общие)": 1.0,
-        "Bacteroides spp.": 1.0, "Clostridium spp.": 0.1, "Escherichia coli (комменсаль)": 1.0,
-        "Proteobacteria (проч.)": 1.0, "Candida spp. (дрожжепод.)": 1.2
-    },
-    "Пробиотики (курс)": {
-        "Lactobacillus spp.": 2.0, "Bifidobacterium spp.": 1.6, "Firmicutes (общие)": 1.05
-    },
-    "Неправильное питание (высокожировая, мало клетчатки)": {
-        "Lactobacillus spp.": 0.6, "Bifidobacterium spp.": 0.5, "Firmicutes (общие)": 1.3,
-        "Bacteroides spp.": 1.4, "Escherichia coli (комменсаль)": 1.2
-    },
-    "Здоровая диета (богатая клетчаткой)": {
-        "Bifidobacterium spp.": 1.5, "Lactobacillus spp.": 1.3, "Firmicutes (общие)": 1.1,
-        "Clostridium spp.": 0.8
-    },
-    "Хронический стресс": {
-        "Lactobacillus spp.": 0.8, "Bifidobacterium spp.": 0.85, "Proteobacteria (проч.)": 1.4
-    },
-    "Недосып / нерегулярный сон": {
-        "Lactobacillus spp.": 0.9, "Clostridium spp.": 1.1
-    },
-    "Интенсивная физ. нагрузка": {
-        "Lactobacillus spp.": 1.1, "Bifidobacterium spp.": 1.1, "Firmicutes (общие)": 1.05
-    },
-    "Длительная госпитализация / ИВЛ": {
-        "Proteobacteria (проч.)": 3.0, "Clostridium spp.": 2.0, "Candida spp. (дрожжепод.)": 10.0
-    },
-    "Иммунодефицит / химиотерапия": {
-        "Lactobacillus spp.": 0.5, "Bifidobacterium spp.": 0.5, "Proteobacteria (проч.)": 2.5,
-        "Candida spp. (дрожжепод.)": 5.0
-    },
-    "Приём антацидов / PPI": {
-        "Proteobacteria (проч.)": 1.5, "Escherichia coli (комменсаль)": 1.3, "Candida spp. (дрожжепод.)": 2.0
     }
 }
 
-# Adjust antibiotic/probiotic strength by duration
-def duration_scale_ab(days):
-    return min(1.0, days / 14.0)
-
-def duration_scale_pro(days):
-    return min(1.0, days / 14.0)
-
-# Apply factors
-def simulate(baseline, factors, ab_days=0, probiotic_days=0):
-    result = baseline.copy()
-    mult = {k: 1.0 for k in baseline.keys()}
-
-    for f in factors:
-        if f in ["Амоксициллин/клавуланат (Аугментин)", "Цефтриаксон", "Азитромицин", 
-                "Левофлоксацин", "Метронидазол", "Ванкомицин (пероральный)"]:
-            eff = effects[f]
-            for k, v in eff.items():
-                applied = 1 + (v - 1) * duration_scale_ab(ab_days)
-                mult[k] *= applied
-        elif f == "Пробиотики (курс)":
-            applied = effects[f]
-            scale = duration_scale_pro(probiotic_days)
-            for k, v in applied.items():
-                mult[k] *= (1 + (v - 1) * scale)
-        else:
-            eff = effects[f]
-            for k, v in eff.items():
-                mult[k] *= v
-
-    for k in result:
-        m = mult.get(k, 1.0)
-        result[k] = max(0.0, result[k] * m)
-
-    return result, mult
-
-# Run simulation
-if factors:
-    simulated, multipliers = simulate(baseline, factors, ab_days, probiotic_course_days)
-else:
-    simulated, multipliers = baseline, {k: 1.0 for k in baseline.keys()}
-
-# Prepare DataFrame for display
-df = pd.DataFrame([
-    {"Bacteria": k,
-     "Baseline (KOE/g)": baseline[k],
-     "Multiplier": multipliers[k],
-     "Simulated (KOE/g)": simulated[k]}
-    for k in baseline.keys()
-])
-
-# Format numbers
-def sci(x):
-    return "{:.3e}".format(x)
-
-df_display = df.copy()
-df_display["Baseline (KOE/g)"] = df_display["Baseline (KOE/g)"].apply(sci)
-df_display["Simulated (KOE/g)"] = df_display["Simulated (KOE/g)"].apply(sci)
-df_display["Multiplier"] = df_display["Multiplier"].apply(lambda x: f"{x:.2f}×")
-
-# Show results
-st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">Результаты анализа</h3></div>', unsafe_allow_html=True)
-
-st.subheader("Таблица концентраций")
-st.dataframe(df_display.set_index("Bacteria"), use_container_width=True)
-
-# Bar chart
-st.subheader("Графическое распределение (логарифмическая шкала)")
-plot_df = df[["Bacteria", "Simulated (KOE/g)"]].copy()
-plot_df["Simulated (KOE/g)"] = plot_df["Simulated (KOE/g)"].astype(float)
-fig = px.bar(plot_df, x="Bacteria", y="Simulated (KOE/g)",
-             labels={"Simulated (KOE/g)": "КОЕ/г"},
-             log_y=True,
-             height=450,
-             color_discrete_sequence=['#228b22'])
-fig.update_layout(plot_bgcolor='rgba(0,0,0,0)')
-st.plotly_chart(fig, use_container_width=True)
-
-# Detailed automatic conclusion logic
-def analyze(updated_dict):
-    msgs = []
-    for k in baseline:
-        base = baseline[k]
-        val = updated_dict[k]
-        if val <= base * 0.2:
-            msgs.append(f"Резкое снижение {k} (≤20% от базового уровня)")
-        elif val <= base * 0.6:
-            msgs.append(f"Умеренное снижение {k} (20–60% от базового)")
-        elif val >= base * 5:
-            msgs.append(f"Выраженное увеличение {k} (≥5× базового) — возможна переколонизация")
-        elif val >= base * 1.5:
-            msgs.append(f"Умеренное увеличение {k} (1.5–5× базового)")
+# Симуляция воздействия
+if assessment["color"] in ["red", "orange"] and ab_recommendations[0]["drug"] != "Требуется консультация специалиста":
+    selected_ab = st.selectbox(
+        "Выберите антибиотик для оценки влияния на микробиом:",
+        [rec["drug"] for rec in ab_recommendations if rec["drug"] in effects]
+    )
     
-    conclusions = []
-    lacto = updated_dict["Lactobacillus spp."]
-    bifi = updated_dict["Bifidobacterium spp."]
-    clost = updated_dict["Clostridium spp."]
-    proteo = updated_dict["Proteobacteria (проч.)"]
-    candida = updated_dict["Candida spp. (дрожжепод.)"]
+    if selected_ab in effects:
+        # Симуляция
+        simulated = baseline.copy()
+        for bacteria, effect in effects[selected_ab].items():
+            simulated[bacteria] = max(0.0, simulated[bacteria] * effect)
+        
+        # Визуализация
+        plot_df = pd.DataFrame([
+            {"Бактерии": k, "КОЕ/г": v, "Тип": "После АБ"} 
+            for k, v in simulated.items()
+        ])
+        baseline_df = pd.DataFrame([
+            {"Бактерии": k, "КОЕ/г": v, "Тип": "До АБ"} 
+            for k, v in baseline.items()
+        ])
+        comparison_df = pd.concat([baseline_df, plot_df])
+        
+        fig = px.bar(comparison_df, x="Бактерии", y="КОЕ/г", color="Тип",
+                     barmode="group", log_y=True, height=400,
+                     color_discrete_map={"До АБ": "#228b22", "После АБ": "#ff6b6b"})
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Анализ изменений
+        st.write("**Анализ изменений микробиома:**")
+        for bacteria in baseline:
+            change = (simulated[bacteria] - baseline[bacteria]) / baseline[bacteria] * 100
+            if change < -50:
+                st.error(f"🔻 {bacteria}: снижение на {abs(change):.1f}%")
+            elif change > 100:
+                st.warning(f"🔺 {bacteria}: увеличение в {simulated[bacteria]/baseline[bacteria]:.1f} раз")
 
-    if lacto < baseline["Lactobacillus spp."] * 0.5 and bifi < baseline["Bifidobacterium spp."] * 0.5:
-        conclusions.append("Патерн: снижение основных симбионтов — риск дисбактериоза")
-    if proteo > baseline["Proteobacteria (проч.)"] * 2.0:
-        conclusions.append("Увеличение Proteobacteria — маркер воспаления/дисбиоза")
-    if candida > baseline["Candida spp. (дрожжепод.)"] * 5:
-        conclusions.append("Сильный рост Candida — риск кандидоза/суперинфекции")
-    if clost > baseline["Clostridium spp."] * 5:
-        conclusions.append("Выраженное увеличение Clostridium — возможна токсигенная колонизация")
-    if not conclusions:
-        conclusions.append("Серьёзных отклонений не выявлено; микробиом относительно стабилен")
+# РАЗДЕЛ 5: СТАТИСТИКА ИЗ ОПРОСА (заглушка - потом заменишь)
+st.sidebar.markdown("---")
+st.sidebar.subheader("📊 Данные опроса Мед24-015")
 
-    final = "## Автоматическое заключение:\n\n"
-    final += "\n".join(msgs[:6]) + ("\n\n" if msgs else "")
-    final += "## Основные выводы:\n" + "\n".join(conclusions)
-    final += "\n\n## Рекомендации:\n- Рассмотреть корректировку факторов влияния\n- При выраженных отклонениях — лабораторная диагностика\n- Мониторинг состояния микробиома"
-    return final
+st.sidebar.markdown("""
+**Предварительные результаты (n=0):**
 
+*По мере поступления ответов данные будут обновляться*
 
-conclusion_text = analyze(simulated)
+- Частота нерациональных назначений: ...
+- Самые частые ошибки: ...
+- Средняя длительность приема: ...
+""")
 
-st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">Интерпретация и рекомендации</h3></div>', unsafe_allow_html=True)
-st.markdown(conclusion_text)
-
-# Download buttons
-st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">💾 Экспорт результатов</h3></div>', unsafe_allow_html=True)
-
-csv_buf = io.StringIO()
-df.to_csv(csv_buf, index=False)
-csv_bytes = csv_buf.getvalue().encode()
-
-report = {
-    "author": "Камалов Жандос",
-    "group": "Мед24-015",
-    "university": "Медицинский университет имени С. Д. Асфендиярова",
-    "datetime": datetime.datetime.utcnow().isoformat() + "Z",
-    "factors": factors,
-    "antibiotics_days": ab_days,
-    "probiotic_days": probiotic_course_days,
-    "results": {row["Bacteria"]: row["Simulated (KOE/g)"] for _, row in df.iterrows()},
-    "conclusion": conclusion_text
-}
-
-report_txt = f"""ОТЧЁТ ПО СИМУЛЯЦИИ МИКРОБИОМА
-{'='*50}
-
-Автор: {report['author']}
-Группа: {report['group']}
-Университет: {report['university']}
-Дата анализа: {report['datetime']}
-
-ФАКТОРЫ ВЛИЯНИЯ:
-{'-'*20}
-{chr(10).join(f'• {f}' for f in factors) if factors else '• Факторы не выбраны'}
-
-ПАРАМЕТРЫ:
-{'-'*10}
-• Длительность антибиотиков: {ab_days} дней
-• Длительность пробиотиков: {probiotic_course_days} дней
-
-РЕЗУЛЬТАТЫ (КОЕ/г):
-{'-'*20}
-"""
-for k, v in report["results"].items():
-    report_txt += f"• {k}: {v:.3e}\n"
-
-report_txt += f"\n{report['conclusion']}"
-
-col1, col2 = st.columns(2)
-with col1:
-    st.download_button("Скачать CSV результатов", data=csv_bytes, 
-                      file_name="microbiome_results.csv", mime="text/csv",
-                      use_container_width=True)
-with col2:
-    st.download_button("Скачать полный отчёт", data=report_txt.encode('utf-8'),
-                      file_name="microbiome_report.txt", mime="text/plain",
-                      use_container_width=True)
-
-# Footer
+# ИНФОРМАЦИЯ О ПРОЕКТЕ
 st.markdown("---")
-st.markdown(
-    """
-    <div style="text-align:center; color:#666; font-size:14px;">
-        <b>Учебный симулятор — не является клиническим заключением</b><br>
-        Медицинский университет имени С. Д. Асфендиярова • 2024
-    </div>
-    """, unsafe_allow_html=True
-)
-
-
-
-
+st.markdown("""
+<div style="text-align:center; color:#666;">
+    <b>Клинический симулятор антибиотикотерапии</b><br>
+    Медицинский университет имени С. Д. Асфендиярова • 2024<br>
+    <small>Учебное пособие - не заменяет консультацию врача</small>
+</div>
+""", unsafe_allow_html=True)
