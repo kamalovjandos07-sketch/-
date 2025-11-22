@@ -11,7 +11,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Стили с Inter шрифтом
+# Стили с фиолетовой цветовой схемой
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -24,68 +24,72 @@ st.markdown("""
     h1, h2, h3, h4, h5, h6 {
         font-family: 'Inter', sans-serif;
         font-weight: 600;
-        color: #1a1a1a;
+        color: #2d3748;
         letter-spacing: -0.02em;
     }
     
     .main {
-        background-color: #f8f9fa;
+        background-color: #f8fafc;
     }
     
     .stButton>button {
         font-family: 'Inter', sans-serif;
         font-weight: 500;
+        background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+        border: none;
+        color: white;
     }
     
-    .stSelectbox, .stMultiselect, .stNumberInput, .stSlider {
-        font-family: 'Inter', sans-serif;
+    .stButton>button:hover {
+        background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
+        color: white;
     }
     
     .header-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 50%, #5b21b6 100%);
         padding: 40px 30px;
         border-radius: 16px;
         color: white;
         text-align: center;
         margin-bottom: 30px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        box-shadow: 0 8px 25px rgba(124, 58, 237, 0.3);
     }
     
     .crisis-alert {
-        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
         color: white;
         padding: 24px;
         border-radius: 12px;
         margin: 20px 0;
         border: none;
-        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
     }
     
     .stats-box {
         background: white;
         padding: 24px;
         border-radius: 12px;
-        border-left: 6px solid #228b22;
+        border-left: 6px solid #7c3aed;
         margin: 15px 0;
         box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     }
     
     .antibiotic-box {
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
         padding: 20px;
         border-radius: 10px;
-        border-left: 5px solid #2196f3;
+        border-left: 5px solid #7c3aed;
         margin: 12px 0;
-        box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
+        box-shadow: 0 2px 8px rgba(124, 58, 237, 0.1);
     }
     
     .no-antibiotic-box {
-        background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
         padding: 20px;
         border-radius: 10px;
-        border-left: 5px solid #4caf50;
+        border-left: 5px solid #16a34a;
         margin: 12px 0;
-        box-shadow: 0 2px 8px rgba(76, 175, 80, 0.1);
+        box-shadow: 0 2px 8px rgba(22, 163, 74, 0.1);
     }
     
     .diagnosis-card {
@@ -94,7 +98,8 @@ st.markdown("""
         border-radius: 12px;
         margin: 15px 0;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        border: 1px solid #e0e0e0;
+        border: 1px solid #e2e8f0;
+        border-top: 4px solid #7c3aed;
     }
     
     .sidebar-section {
@@ -103,6 +108,38 @@ st.markdown("""
         border-radius: 12px;
         margin: 10px 0;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-left: 4px solid #7c3aed;
+    }
+    
+    .gradient-section {
+        background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+        color: white;
+        padding: 25px;
+        border-radius: 12px;
+        margin: 20px 0;
+        box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+    }
+    
+    .metric-card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #7c3aed;
+        margin: 0;
+    }
+    
+    .metric-label {
+        font-size: 0.9rem;
+        color: #64748b;
+        margin: 5px 0 0 0;
     }
     
     @keyframes pulse {
@@ -114,10 +151,29 @@ st.markdown("""
     .pulse-alert {
         animation: pulse 2s infinite;
     }
+    
+    /* Стили для selectbox и других элементов */
+    .stSelectbox > div > div {
+        border: 1px solid #cbd5e0;
+        border-radius: 8px;
+    }
+    
+    .stSelectbox > div > div:hover {
+        border-color: #7c3aed;
+    }
+    
+    .stMultiselect > div > div {
+        border: 1px solid #cbd5e0;
+        border-radius: 8px;
+    }
+    
+    .stMultiselect > div > div:hover {
+        border-color: #7c3aed;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# 🏥 БАЗА ЗАБОЛЕВАНИЙ И ЛЕЧЕНИЯ
+# 🏥 БАЗА ЗАБОЛЕВАНИЙ И ЛЕЧЕНИЯ (остается без изменений)
 MEDICAL_KNOWLEDGE_BASE = {
     "community_acquired_pneumonia": {
         "diagnosis_criteria": ["Лихорадка >38°C", "Кашель", "Одышка", "Боль в груди", "Лейкоцитоз", "Повышение СРБ"],
@@ -203,7 +259,7 @@ MEDICAL_KNOWLEDGE_BASE = {
     }
 }
 
-# 🔍 ДИАГНОСТИЧЕСКАЯ СИСТЕМА
+# 🔍 ДИАГНОСТИЧЕСКАЯ СИСТЕМА (остается без изменений)
 def medical_diagnosis_system(symptoms, lab_data, vital_signs, temperature, bp_systolic, bp_diastolic, wbc, crp):
     symptom_score = {}
     
@@ -289,64 +345,56 @@ def medical_diagnosis_system(symptoms, lab_data, vital_signs, temperature, bp_sy
 
 # 🎯 ОСНОВНОЙ ИНТЕРФЕЙС
 def main():
-    # ЗАГОЛОВОК С МЕСТОМ ДЛЯ ЛОГОТИПА
-    col1, col2 = st.columns([1, 4])
-    with col1:
-        # 👇 МЕСТО ДЛЯ ТВОЕГО ЛОГОТИПА
-        st.image("logo.png", width=180)
-    with col2:
-        st.markdown("""
-        <div class="header-section">
-            <h1 style="margin:0; font-size:2.8rem; font-weight:700;">Antibiotic Stewardship System</h1>
-            <p style="font-size:1.3rem; margin:15px 0 0 0; opacity:0.9;">
-                Борьба с антибиотикорезистентностью через рациональную диагностику
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+    # ЗАГОЛОВОК С ФИОЛЕТОВЫМ ГРАДИЕНТОМ
+    st.markdown("""
+    <div class="header-section">
+        <h1 style="margin:0; font-size:2.8rem; font-weight:700;">Antibiotic Stewardship System</h1>
+        <p style="font-size:1.3rem; margin:15px 0 0 0; opacity:0.9;">
+            Борьба с антибиотикорезистентностью через рациональную диагностику
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # СТАТИСТИКА ПРОБЛЕМЫ
+    # СТАТИСТИКА С ФИОЛЕТОВЫМИ АКЦЕНТАМИ
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown("""
-        <div class="stats-box">
-            <h3 style="color:#228b22; margin:0">1.2M</h3>
-            <p style="margin:5px 0 0 0; color:#666">смертей в год от резистентности</p>
+        <div class="metric-card">
+            <p class="metric-value">1.2M</p>
+            <p class="metric-label">смертей в год от резистентности</p>
         </div>
         """, unsafe_allow_html=True)
     
     with col2:
         st.markdown("""
-        <div class="stats-box">
-            <h3 style="color:#228b22; margin:0">50%</h3>
-            <p style="margin:5px 0 0 0; color:#666">нерациональных назначений антибиотиков</p>
+        <div class="metric-card">
+            <p class="metric-value">50%</p>
+            <p class="metric-label">нерациональных назначений</p>
         </div>
         """, unsafe_allow_html=True)
     
     with col3:
         st.markdown("""
-        <div class="stats-box">
-            <h3 style="color:#228b22; margin:0">$100T</h3>
-            <p style="margin:5px 0 0 0; color:#666">мировые потери к 2050 году</p>
+        <div class="metric-card">
+            <p class="metric-value">$100T</p>
+            <p class="metric-label">мировые потери к 2050 году</p>
         </div>
         """, unsafe_allow_html=True)
     
-    # МЕСТО ДЛЯ ГРАФИКОВ И ФОТО
-    st.markdown("---")
-    st.subheader("Визуализация проблемы антибиотикорезистентности")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        # 👇 МЕСТО ДЛЯ ПЕРВОЙ КАРТИНКИ
-        # st.image("resistance_graph.png", use_column_width=True, caption="Рост резистентности")
-        st.info("📊 Место для графика резистентности")
-    with col2:
-        # 👇 МЕСТО ДЛЯ ВТОРОЙ КАРТИНКИ
-        # st.image("bacteria_image.jpg", use_column_width=True, caption="Механизмы резистентности")
-        st.info("🦠 Место для фото бактерий")
+    # ФИОЛЕТОВЫЙ ИНФОБЛОК
+    st.markdown("""
+    <div class="gradient-section">
+        <h3 style="margin:0 0 15px 0; color:white">🎯 Миссия проекта</h3>
+        <p style="margin:0; color:white; font-size:1.1rem; opacity:0.9">
+        Создание образовательной платформы для обучения рациональному назначению антибиотиков 
+        и профилактике антибиотикорезистентности среди будущих медицинских специалистов
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # ОСНОВНОЙ ИНТЕРФЕЙС ДИАГНОСТИКИ
     st.markdown("---")
-    st.header("Клиническая диагностика")
+    st.header("🩺 Клиническая диагностика")
     st.write("Система поддержки врачебных решений для рационального назначения антибиотиков")
     
     # ВВОД ДАННЫХ
@@ -440,7 +488,7 @@ def main():
             if "antibiotics" in treatments:
                 st.markdown("""
                 <div class="antibiotic-box">
-                    <h4 style="margin:0 0 10px 0; color:#1565c0">Антибактериальная терапия</h4>
+                    <h4 style="margin:0 0 10px 0; color:#7c3aed">Антибактериальная терапия</h4>
                 """, unsafe_allow_html=True)
                 for med in treatments["antibiotics"]:
                     st.write(f"• {med}")
@@ -449,7 +497,7 @@ def main():
             if "antivirals" in treatments:
                 st.markdown("""
                 <div class="antibiotic-box">
-                    <h4 style="margin:0 0 10px 0; color:#1565c0">Противовирусная терапия</h4>
+                    <h4 style="margin:0 0 10px 0; color:#7c3aed">Противовирусная терапия</h4>
                 """, unsafe_allow_html=True)
                 for med in treatments["antivirals"]:
                     st.write(f"• {med}")
@@ -458,7 +506,7 @@ def main():
             if "antibiotics" not in treatments and "Антибиотики НЕ ПОКАЗАНЫ" in str(treatments.get("antibiotics", [])):
                 st.markdown("""
                 <div class="no-antibiotic-box">
-                    <h4 style="margin:0 0 10px 0; color:#2e7d32">Рациональная антибиотикотерапия</h4>
+                    <h4 style="margin:0 0 10px 0; color:#16a34a">Рациональная антибиотикотерапия</h4>
                     <p style="margin:0; font-weight:500">Антибиотики не показаны - сохранение эффективности препаратов для будущих поколений</p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -501,33 +549,27 @@ def main():
                 diag_name = diagnosis.replace('_', ' ').title()
                 st.write(f"{i}. **{diag_name}** ({score} баллов)")
     
-    # БОКОВАЯ ПАНЕЛЬ С МЕСТОМ ДЛЯ ЛОГОТИПА
+    # БОКОВАЯ ПАНЕЛЬ С ФИОЛЕТОВЫМИ АКЦЕНТАМИ
     with st.sidebar:
-        # 👇 МЕСТО ДЛЯ ЛОГОТИПА В SIDEBAR
-        # st.image("logo.png", width=120)
         st.markdown("""
         <div class="sidebar-section">
-            <h4 style="margin:0 0 10px 0;">📍 Место для логотипа университета</h4>
-            <p style="margin:0; color:#666">Медицинский университет им. С.Д. Асфендиярова</p>
-            <p style="margin:5px 0 0 0; color:#666">Камалов Жандос — Мед24-015</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("---")
-        
-        st.markdown("""
-        <div class="sidebar-section">
-            <h3 style="margin:0 0 15px 0">О системе</h3>
+            <h3 style="margin:0 0 15px 0; color:#7c3aed">О системе</h3>
             <p style="margin:0 0 15px 0; color:#666">
             Образовательная платформа для борьбы с антибиотикорезистентностью 
             через рациональную диагностику и назначение терапии.
+            </p>
+            <p style="margin:0; color:#7c3aed; font-weight:500">
+            Медицинский университет им. С.Д. Асфендиярова
+            </p>
+            <p style="margin:5px 0 0 0; color:#666">
+            Камалов Жандос — Мед24-015
             </p>
         </div>
         """, unsafe_allow_html=True)
         
         st.markdown("""
         <div class="sidebar-section">
-            <h4 style="margin:0 0 12px 0">Диагностируемые состояния</h4>
+            <h4 style="margin:0 0 12px 0; color:#7c3aed">Диагностируемые состояния</h4>
             <ul style="margin:0; padding-left:20px; color:#666">
             <li>Пневмония</li>
             <li>Стрептококковая ангина</li>
@@ -542,7 +584,7 @@ def main():
         
         st.markdown("""
         <div class="sidebar-section">
-            <h4 style="margin:0 0 12px 0; color:#d32f2f">Важно</h4>
+            <h4 style="margin:0 0 12px 0; color:#dc2626">Важно</h4>
             <p style="margin:0; color:#666; font-size:0.9rem">
             Данная система предназначена для образовательных целей 
             и не заменяет консультацию врача. При критических состояниях 
@@ -553,8 +595,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
