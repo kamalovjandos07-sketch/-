@@ -289,15 +289,21 @@ def medical_diagnosis_system(symptoms, lab_data, vital_signs, temperature, bp_sy
 
 # 🎯 ОСНОВНОЙ ИНТЕРФЕЙС
 def main():
-    # ЗАГОЛОВОК С АНТИБИОТИКОРЕЗИСТЕНТНОСТЬЮ
-    st.markdown("""
-    <div class="header-section">
-        <h1 style="margin:0; font-size:2.8rem; font-weight:700;">Antibiotic Stewardship System</h1>
-        <p style="font-size:1.3rem; margin:15px 0 0 0; opacity:0.9;">
-            Борьба с антибиотикорезистентностью через рациональную диагностику
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    # ЗАГОЛОВОК С МЕСТОМ ДЛЯ ЛОГОТИПА
+    col1, col2 = st.columns([1, 4])
+    with col1:
+        # 👇 МЕСТО ДЛЯ ТВОЕГО ЛОГОТИПА
+        # st.image("logo.png", width=80)
+        st.info("📍 Место для логотипа")
+    with col2:
+        st.markdown("""
+        <div class="header-section">
+            <h1 style="margin:0; font-size:2.8rem; font-weight:700;">Antibiotic Stewardship System</h1>
+            <p style="font-size:1.3rem; margin:15px 0 0 0; opacity:0.9;">
+                Борьба с антибиотикорезистентностью через рациональную диагностику
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
     
     # СТАТИСТИКА ПРОБЛЕМЫ
     col1, col2, col3 = st.columns(3)
@@ -324,6 +330,20 @@ def main():
             <p style="margin:5px 0 0 0; color:#666">мировые потери к 2050 году</p>
         </div>
         """, unsafe_allow_html=True)
+    
+    # МЕСТО ДЛЯ ГРАФИКОВ И ФОТО
+    st.markdown("---")
+    st.subheader("Визуализация проблемы антибиотикорезистентности")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        # 👇 МЕСТО ДЛЯ ПЕРВОЙ КАРТИНКИ
+        # st.image("resistance_graph.png", use_column_width=True, caption="Рост резистентности")
+        st.info("📊 Место для графика резистентности")
+    with col2:
+        # 👇 МЕСТО ДЛЯ ВТОРОЙ КАРТИНКИ
+        # st.image("bacteria_image.jpg", use_column_width=True, caption="Механизмы резистентности")
+        st.info("🦠 Место для фото бактерий")
     
     # ОСНОВНОЙ ИНТЕРФЕЙС ДИАГНОСТИКИ
     st.markdown("---")
@@ -482,8 +502,20 @@ def main():
                 diag_name = diagnosis.replace('_', ' ').title()
                 st.write(f"{i}. **{diag_name}** ({score} баллов)")
     
-    # БОКОВАЯ ПАНЕЛЬ
+    # БОКОВАЯ ПАНЕЛЬ С МЕСТОМ ДЛЯ ЛОГОТИПА
     with st.sidebar:
+        # 👇 МЕСТО ДЛЯ ЛОГОТИПА В SIDEBAR
+        # st.image("logo.png", width=120)
+        st.markdown("""
+        <div class="sidebar-section">
+            <h4 style="margin:0 0 10px 0;">📍 Место для логотипа университета</h4>
+            <p style="margin:0; color:#666">Медицинский университет им. С.Д. Асфендиярова</p>
+            <p style="margin:5px 0 0 0; color:#666">Камалов Жандос — Мед24-015</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        
         st.markdown("""
         <div class="sidebar-section">
             <h3 style="margin:0 0 15px 0">О системе</h3>
