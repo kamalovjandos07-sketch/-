@@ -293,7 +293,7 @@ def main():
     col1, col2 = st.columns([1, 4])
     with col1:
         # 👇 МЕСТО ДЛЯ ТВОЕГО ЛОГОТИПА
-        st.image("logo.png", width=150)
+        st.image("logo.png", width=180)
     with col2:
         st.markdown("""
         <div class="header-section">
@@ -553,6 +553,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
