@@ -1,358 +1,524 @@
-# app.py
 import streamlit as st
 import pandas as pd
 import numpy as np
-import io
-import datetime
-import plotly.express as px
+from datetime import datetime
 
-st.set_page_config(page_title="Клинический симулятор АБТ",
-                   page_icon="🩺", layout="centered")
+# Настройки страницы
+st.set_page_config(
+    page_title="Antibiotic Stewardship System",
+    page_icon="🛡️", 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# Медицинский стиль
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background: linear-gradient(135deg, #f8fffe 0%, #f0fff0 50%, #f8fffe 100%);
-        font-family: 'Arial', sans-serif;
+# Стили с Inter шрифтом
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+        line-height: 1.6;
     }
-    .medical-header {
-        background: linear-gradient(90deg, #228b22 0%, #32cd32 100%);
-        padding: 25px;
-        border-radius: 15px;
+    
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        color: #1a1a1a;
+        letter-spacing: -0.02em;
+    }
+    
+    .main {
+        background-color: #f8f9fa;
+    }
+    
+    .stButton>button {
+        font-family: 'Inter', sans-serif;
+        font-weight: 500;
+    }
+    
+    .stSelectbox, .stMultiselect, .stNumberInput, .stSlider {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .header-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px 30px;
+        border-radius: 16px;
         color: white;
         text-align: center;
-        border-left: 8px solid #006400;
-        box-shadow: 0 4px 8px rgba(0,100,0,0.2);
-        margin-bottom: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
     }
-    .section-header {
-        background: linear-gradient(90deg, #e8f5e8 0%, #f0fff0 100%);
-        padding: 15px;
-        border-radius: 10px;
-        border-left: 5px solid #228b22;
-        margin: 20px 0 15px 0;
+    
+    .crisis-alert {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        color: white;
+        padding: 24px;
+        border-radius: 12px;
+        margin: 20px 0;
+        border: none;
+        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
     }
-    .warning-box {
-        background: #fff3cd;
-        border: 1px solid #ffeaa7;
+    
+    .stats-box {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        border-left: 6px solid #228b22;
+        margin: 15px 0;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    
+    .antibiotic-box {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        padding: 20px;
         border-radius: 10px;
-        padding: 15px;
+        border-left: 5px solid #2196f3;
+        margin: 12px 0;
+        box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
+    }
+    
+    .no-antibiotic-box {
+        background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 5px solid #4caf50;
+        margin: 12px 0;
+        box-shadow: 0 2px 8px rgba(76, 175, 80, 0.1);
+    }
+    
+    .diagnosis-card {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        margin: 15px 0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 1px solid #e0e0e0;
+    }
+    
+    .sidebar-section {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
         margin: 10px 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
-    .success-box {
-        background: #d1ecf1;
-        border: 1px solid #bee5eb;
-        border-radius: 10px;
-        padding: 15px;
-        margin: 10px 0;
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
     }
-    </style>
-    """, unsafe_allow_html=True
-)
-
-# Заголовок
-st.markdown(
-    """
-    <div class="medical-header">
-        <h2 style="margin:0; color:white; font-weight:bold;">🏥 Медицинский университет имени С. Д. Асфендиярова</h2>
-        <div style="font-size:18px; margin-top:15px; font-weight:bold;">Камалов Жандос — Мед24-015</div>
-        <div style="font-size:14px; margin-top:10px; opacity:0.9;">Клинический симулятор рациональной антибиотикотерапии</div>
-    </div>
-    """, unsafe_allow_html=True
-)
-
-# Основной заголовок
-st.markdown('<div class="section-header"><h1 style="margin:0; color:#006400;">🩺 Клинический симулятор антибиотикотерапии</h1></div>', unsafe_allow_html=True)
-
-st.write("**Система оценки необходимости и подбора антибиотиков на основе клинической картины**")
-
-# РАЗДЕЛ 1: ДИАГНОСТИКА ПАЦИЕНТА
-st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">🔍 Диагностика пациента</h3></div>', unsafe_allow_html=True)
-
-col1, col2 = st.columns(2)
-
-with col1:
-    st.subheader("Клиническая картина")
-    symptoms = st.multiselect(
-        "Симптомы пациента:",
-        ["Лихорадка >38°C", "Озноб", "Кашель с гнойной мокротой", 
-         "Боль в горле с налетами", "Заложенность носа", "Насморк",
-         "Головная боль", "Слабость", "Одышка",
-         "Боль при мочеиспускании", "Частые позывы", "Кожные высыпания",
-         "Боль в ухе", "Диарея", "Тошнота/рвота"]
-    )
     
-    temperature = st.slider("Температура тела (°C):", 36.0, 41.0, 37.0, 0.1)
-
-with col2:
-    st.subheader("Данные обследования")
-    
-    lab_data = st.selectbox(
-        "Результаты анализов:",
-        ["Не проводились", "Лейкоцитоз (>10×10⁹/л)", "Повышение СРБ (>5 мг/л)", 
-         "Посев: выявлен возбудитель", "Анализы в норме", "Лимфоцитоз"]
-    )
-    
-    diagnosis_presumptive = st.selectbox(
-        "Предполагаемый диагноз:",
-        ["ОРВИ", "Острый бронхит", "Пневмония", "Ангина/тонзиллит",
-         "Острый синусит", "Отит", "Инфекция МВП", 
-         "Кожная инфекция", "Кишечная инфекция", "Другое"]
-    )
-
-# РАЗДЕЛ 2: ОЦЕНКА НЕОБХОДИМОСТИ АНТИБИОТИКОВ
-st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">📊 Оценка необходимости антибиотикотерапии</h3></div>', unsafe_allow_html=True)
-
-def assess_antibiotic_need(symptoms, lab_data, diagnosis, temperature):
-    score = 0
-    recommendations = []
-    
-    # Критерии необходимости АБ
-    if temperature >= 38.5:
-        score += 2
-        recommendations.append("Высокая лихорадка (>38.5°C)")
-    
-    if "Лихорадка >38°C" in symptoms and temperature >= 38.0:
-        score += 1
-    
-    if "Кашель с гнойной мокротой" in symptoms:
-        score += 2
-        recommendations.append("Гнойная мокрота")
-    
-    if "Боль в горле с налетами" in symptoms:
-        score += 2
-        recommendations.append("Налеты на миндалинах")
-    
-    if lab_data in ["Лейкоцитоз (>10×10⁹/л)", "Повышение СРБ (>5 мг/л)"]:
-        score += 2
-        recommendations.append("Воспалительные изменения в анализах")
-    
-    if lab_data == "Посев: выявлен возбудитель":
-        score += 3
-        recommendations.append("Подтвержденный возбудитель")
-    
-    # Диагностические критерии
-    if diagnosis in ["Пневмония", "Ангина/тонзиллит", "Пиелонефрит"]:
-        score += 3
-        recommendations.append(f"Диагноз '{diagnosis}' требует АБТ")
-    
-    if diagnosis in ["Острый бронхит", "Острый синусит", "Отит"]:
-        score += 2
-        recommendations.append(f"Диагноз '{diagnosis}' - рассмотреть АБТ")
-    
-    if diagnosis == "ОРВИ":
-        score -= 2
-        recommendations.append("ОРВИ - антибиотики не показаны")
-    
-    # Оценка результата
-    if score >= 6:
-        return {
-            "decision": "🔴 Антибиотикотерапия ОБОСНОВАНА",
-            "score": score,
-            "recommendations": recommendations,
-            "color": "red"
-        }
-    elif score >= 3:
-        return {
-            "decision": "🟡 Рассмотреть антибиотики после дообследования",
-            "score": score, 
-            "recommendations": recommendations,
-            "color": "orange"
-        }
-    else:
-        return {
-            "decision": "🟢 Антибиотики НЕ ПОКАЗАНЫ - симптоматическая терапия",
-            "score": score,
-            "recommendations": recommendations,
-            "color": "green"
-        }
-
-assessment = assess_antibiotic_need(symptoms, lab_data, diagnosis_presumptive, temperature)
-
-# Отображение результата оценки
-if assessment["color"] == "red":
-    st.error(f"**Заключение:** {assessment['decision']}")
-elif assessment["color"] == "orange":
-    st.warning(f"**Заключение:** {assessment['decision']}")
-else:
-    st.success(f"**Заключение:** {assessment['decision']}")
-
-st.write(f"**Баллы по шкале:** {assessment['score']}/10")
-if assessment["recommendations"]:
-    st.write("**Критерии:**")
-    for rec in assessment["recommendations"]:
-        st.write(f"- {rec}")
-
-# РАЗДЕЛ 3: ПОДБОР АНТИБИОТИКОВ (только если показаны)
-if assessment["color"] in ["red", "orange"]:
-    st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">💊 Рекомендации по антибиотикотерапии</h3></div>', unsafe_allow_html=True)
-    
-    def recommend_antibiotics(diagnosis, symptoms):
-        recommendations = []
-        
-        if diagnosis == "Пневмония":
-            recommendations.append({
-                "drug": "Амоксициллин/клавуланат",
-                "dose": "875/125 мг 2 раза/сут",
-                "duration": "7-10 дней",
-                "reason": "Препарат выбора при внебольничной пневмонии"
-            })
-            recommendations.append({
-                "drug": "Азитромицин", 
-                "dose": "500 мг 1 раз/сут",
-                "duration": "3-5 дней",
-                "reason": "При подозрении на атипичную флору"
-            })
-            
-        elif diagnosis == "Ангина/тонзиллит":
-            recommendations.append({
-                "drug": "Амоксициллин",
-                "dose": "500 мг 3 раза/сут", 
-                "duration": "10 дней",
-                "reason": "Препарат выбора при стрептококковой ангине"
-            })
-            
-        elif diagnosis == "Инфекция МВП":
-            recommendations.append({
-                "drug": "Цефтриаксон",
-                "dose": "1 г 1 раз/сут в/м",
-                "duration": "7 дней", 
-                "reason": "При осложненных ИМП"
-            })
-            recommendations.append({
-                "drug": "Левофлоксацин",
-                "dose": "500 мг 1 раз/сут",
-                "duration": "5-7 дней",
-                "reason": "Альтернативный препарат"
-            })
-            
-        elif diagnosis in ["Острый бронхит", "Острый синусит", "Отит"]:
-            recommendations.append({
-                "drug": "Амоксициллин/клавуланат",
-                "dose": "625 мг 3 раза/сут",
-                "duration": "5-7 дней",
-                "reason": "При бактериальной этиологии"
-            })
-            
-        else:
-            recommendations.append({
-                "drug": "Требуется консультация специалиста",
-                "dose": "-",
-                "duration": "-", 
-                "reason": "Для уточнения тактики лечения"
-            })
-            
-        return recommendations
-    
-    ab_recommendations = recommend_antibiotics(diagnosis_presumptive, symptoms)
-    
-    for i, rec in enumerate(ab_recommendations, 1):
-        with st.container():
-            st.markdown(f"**Вариант {i}: {rec['drug']}**")
-            st.write(f"Дозировка: {rec['dose']}")
-            st.write(f"Длительность: {rec['duration']}") 
-            st.write(f"Обоснование: {rec['reason']}")
-            st.markdown("---")
-
-# РАЗДЕЛ 4: СИМУЛЯТОР ВОЗДЕЙСТВИЯ НА МИКРОБИОМ
-st.markdown('<div class="section-header"><h3 style="margin:0; color:#006400;">🧬 Влияние на микробиом</h3></div>', unsafe_allow_html=True)
-
-# Baseline микробиома
-baseline = {
-    "Lactobacillus spp.": 1e8,
-    "Bifidobacterium spp.": 5e9, 
-    "Firmicutes (общие)": 1e10,
-    "Bacteroides spp.": 5e9,
-    "Clostridium spp.": 1e6,
-    "Escherichia coli (комменсаль)": 1e7,
-    "Proteobacteria (проч.)": 1e6,
-    "Candida spp. (дрожжепод.)": 1e4
-}
-
-# Эффекты антибиотиков
-effects = {
-    "Амоксициллин/клавуланат": {
-        "Lactobacillus spp.": 0.1, "Bifidobacterium spp.": 0.15, "Firmicutes (общие)": 0.5,
-        "Bacteroides spp.": 0.4, "Clostridium spp.": 2.0, "Escherichia coli (комменсаль)": 1.5,
-        "Proteobacteria (проч.)": 2.0, "Candida spp. (дрожжепод.)": 5.0
-    },
-    "Азитромицин": {
-        "Lactobacillus spp.": 0.5, "Bifidobacterium spp.": 0.6, "Firmicutes (общие)": 0.8,
-        "Bacteroides spp.": 0.7, "Clostridium spp.": 1.5, "Escherichia coli (комменсаль)": 1.2,
-        "Proteobacteria (проч.)": 1.4, "Candida spp. (дрожжепод.)": 2.0
-    },
-    "Цефтриаксон": {
-        "Lactobacillus spp.": 0.3, "Bifidobacterium spp.": 0.4, "Firmicutes (общие)": 0.7,
-        "Bacteroides spp.": 0.6, "Clostridium spp.": 3.0, "Escherichia coli (комменсаль)": 0.8,
-        "Proteobacteria (проч.)": 1.8, "Candida spp. (дрожжепод.)": 4.0
-    },
-    "Левофлоксацин": {
-        "Lactobacillus spp.": 0.7, "Bifidobacterium spp.": 0.8, "Firmicutes (общие)": 0.9,
-        "Bacteroides spp.": 0.8, "Clostridium spp.": 1.2, "Escherichia coli (комменсаль)": 0.5,
-        "Proteobacteria (проч.)": 0.7, "Candida spp. (дрожжепод.)": 1.8
+    .pulse-alert {
+        animation: pulse 2s infinite;
     }
-}
-
-# Симуляция воздействия
-if assessment["color"] in ["red", "orange"] and ab_recommendations[0]["drug"] != "Требуется консультация специалиста":
-    selected_ab = st.selectbox(
-        "Выберите антибиотик для оценки влияния на микробиом:",
-        [rec["drug"] for rec in ab_recommendations if rec["drug"] in effects]
-    )
-    
-    if selected_ab in effects:
-        # Симуляция
-        simulated = baseline.copy()
-        for bacteria, effect in effects[selected_ab].items():
-            simulated[bacteria] = max(0.0, simulated[bacteria] * effect)
-        
-        # Визуализация
-        plot_df = pd.DataFrame([
-            {"Бактерии": k, "КОЕ/г": v, "Тип": "После АБ"} 
-            for k, v in simulated.items()
-        ])
-        baseline_df = pd.DataFrame([
-            {"Бактерии": k, "КОЕ/г": v, "Тип": "До АБ"} 
-            for k, v in baseline.items()
-        ])
-        comparison_df = pd.concat([baseline_df, plot_df])
-        
-        fig = px.bar(comparison_df, x="Бактерии", y="КОЕ/г", color="Тип",
-                     barmode="group", log_y=True, height=400,
-                     color_discrete_map={"До АБ": "#228b22", "После АБ": "#ff6b6b"})
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Анализ изменений
-        st.write("**Анализ изменений микробиома:**")
-        for bacteria in baseline:
-            change = (simulated[bacteria] - baseline[bacteria]) / baseline[bacteria] * 100
-            if change < -50:
-                st.error(f"🔻 {bacteria}: снижение на {abs(change):.1f}%")
-            elif change > 100:
-                st.warning(f"🔺 {bacteria}: увеличение в {simulated[bacteria]/baseline[bacteria]:.1f} раз")
-
-# РАЗДЕЛ 5: СТАТИСТИКА ИЗ ОПРОСА (заглушка - потом заменишь)
-st.sidebar.markdown("---")
-st.sidebar.subheader("📊 Данные опроса Мед24-015")
-
-st.sidebar.markdown("""
-**Предварительные результаты (n=0):**
-
-*По мере поступления ответов данные будут обновляться*
-
-- Частота нерациональных назначений: ...
-- Самые частые ошибки: ...
-- Средняя длительность приема: ...
-""")
-
-# ИНФОРМАЦИЯ О ПРОЕКТЕ
-st.markdown("---")
-st.markdown("""
-<div style="text-align:center; color:#666;">
-    <b>Клинический симулятор антибиотикотерапии</b><br>
-    Медицинский университет имени С. Д. Асфендиярова • 2024<br>
-    <small>Учебное пособие - не заменяет консультацию врача</small>
-</div>
+</style>
 """, unsafe_allow_html=True)
+
+# 🏥 БАЗА ЗАБОЛЕВАНИЙ И ЛЕЧЕНИЯ
+MEDICAL_KNOWLEDGE_BASE = {
+    "community_acquired_pneumonia": {
+        "diagnosis_criteria": ["Лихорадка >38°C", "Кашель", "Одышка", "Боль в груди", "Лейкоцитоз", "Повышение СРБ"],
+        "required_criteria": 3,
+        "treatments": {
+            "antibiotics": ["Амоксициллин/клавуланат 875/125 мг 2 раза/сут × 7-10 дней", "Азитромицин 500 мг/сут × 3-5 дней"],
+            "symptomatic": ["Парацетамол 500 мг при температуре", "Муколитики (АЦЦ 600 мг/сут)", "Ингаляции с физраствором"],
+            "supportive": ["Постельный режим", "Обильное питье", "Контроль сатурации"]
+        },
+        "referral": "При тяжелом течении - госпитализация",
+        "source": "IDSA/ATS Guidelines 2019"
+    },
+    
+    "streptococcal_pharyngitis": {
+        "diagnosis_criteria": ["Боль в горле", "Лихорадка >38°C", "Налеты на миндалинах", "Увеличение шейных лимфоузлов", "Отсутствие кашля"],
+        "required_criteria": 4,
+        "treatments": {
+            "antibiotics": ["Феноксиметилпенициллин 500 мг 3 раза/сут × 10 дней", "Азитромицин 500 мг/сут × 3 дня при аллергии"],
+            "symptomatic": ["Парацетамол 500 мг при боли", "Местные антисептики (Гексорал, Тантум Верде)", "Полоскание содо-солевым раствором"],
+            "supportive": ["Щадящая диета", "Теплое питье", "Голосовой покой"]
+        },
+        "referral": "При рецидивирующем течении - консультация ЛОРа",
+        "source": "IDSA Pharyngitis Guidelines"
+    },
+    
+    "urinary_tract_infection": {
+        "diagnosis_criteria": ["Дизурия", "Учащенное мочеиспускание", "Боль в надлобковой области", "Лихорадка", "Лейкоциты в моче"],
+        "required_criteria": 2,
+        "treatments": {
+            "antibiotics": ["Нитрофурантоин 100 мг 3 раза/сут × 5 дней", "Фосфомицин 3 г однократно", "Цефтриаксон 1 г/сут в/м при осложнениях"],
+            "symptomatic": ["Ибупрофен 400 мг при боли", "Спазмолитики (Но-шпа 40-80 мг/сут)", "Уросептики (Фитолизин)"],
+            "supportive": ["Обильное питье", "Клюквенные морсы", "Исключение острой пищи"]
+        },
+        "referral": "При рецидивах - уролог, при беременности - срочно к врачу",
+        "source": "IDSA UTI Guidelines"
+    },
+    
+    "acute_bronchitis": {
+        "diagnosis_criteria": ["Кашель <3 недель", "Может быть продуктивным", "Отсутствие лихорадки >38°C", "Отсутствие одышки", "Нормальные показатели воспаления"],
+        "required_criteria": 3,
+        "treatments": {
+            "antibiotics": ["Антибиотики НЕ ПОКАЗАНЫ при вирусной этиологии"],
+            "symptomatic": ["Противокашлевые (Синекод) при сухом кашле", "Муколитики (Амброксол 30 мг 3 раза/сут)", "Бронходилататоры (Сальбутамол) при бронхоспазме"],
+            "supportive": ["Увлажнение воздуха", "Теплое питье", "Ингаляции", "Отказ от курения"]
+        },
+        "referral": "При сохранении симптомов >3 недель - пульмонолог",
+        "source": "NICE Bronchitis Guidelines"
+    },
+    
+    "influenza": {
+        "diagnosis_criteria": ["Внезапное начало", "Лихорадка", "Головная боль", "Мышечные боли", "Слабость", "Сезонность"],
+        "required_criteria": 3,
+        "treatments": {
+            "antivirals": ["Осельтамивир 75 мг 2 раза/сут × 5 дней", "Занамивир ингаляционно"],
+            "symptomatic": ["Парацетамол 500 мг при температуре", "Ибупрофен 400 мг при боли", "Сосудосуживающие капли при рините"],
+            "supportive": ["Постельный режим", "Обильное питье", "Витамин C", "Проветривание помещения"]
+        },
+        "referral": "При тяжелом течении, беременным, пожилым - срочно к врачу",
+        "source": "WHO Influenza Guidelines"
+    },
+    
+    "acute_gastroenteritis": {
+        "diagnosis_criteria": ["Тошнота", "Рвота", "Диарея", "Боль в животе", "Слабость", "Возможна субфебрильная температура"],
+        "required_criteria": 3,
+        "treatments": {
+            "rehydration": ["Регидрон 1 пакет на 1 л воды", "Оральные солевые растворы", "Частое дробное питье"],
+            "symptomatic": ["Смекта 3 пакета/сут", "Энтеросорбенты (Полисорб)", "Противорвотные (Метоклопрамид) только по назначению"],
+            "diet": ["Голод 4-6 часов", "Затем щадящая диета (рис, сухари, бананы)", "Исключение молочного, жирного, острого"]
+        },
+        "referral": "При признаках дегидратации, крови в стуле - срочно к врачу",
+        "source": "ESPID Gastroenteritis Guidelines"
+    },
+    
+    "hypertensive_crisis": {
+        "diagnosis_criteria": ["АД >180/120 мм рт.ст.", "Головная боль", "Тошнота", "Нарушение зрения", "Одышка", "Боль в груди"],
+        "required_criteria": 2,
+        "treatments": {
+            "emergency": ["Немедленный вызов скорой помощи", "Каптоприл 25 мг сублингвально", "Нифедипин 10 мг (только по назначению)"],
+            "monitoring": ["Контроль АД каждые 15 минут", "Покой, полусидячее положение", "Доступ свежего воздуха"]
+        },
+        "referral": "ЭКГ, госпитализация в кардиологическое отделение",
+        "source": "ESC Hypertension Guidelines"
+    }
+}
+
+# 🔍 ДИАГНОСТИЧЕСКАЯ СИСТЕМА
+def medical_diagnosis_system(symptoms, lab_data, vital_signs, temperature, bp_systolic, bp_diastolic, wbc, crp):
+    symptom_score = {}
+    
+    # Проверяем критические состояния первыми
+    if bp_systolic > 180 and bp_diastolic > 120:
+        if any(symptom in ["Головная боль", "Тошнота", "Нарушение зрения", "Одышка", "Боль в груди"] for symptom in symptoms):
+            return "hypertensive_crisis", 10
+    
+    # Определяем лабораторные показатели
+    has_leukocytosis = "Лейкоцитоз" in lab_data or wbc > 10.0
+    has_elevated_crp = "Повышение СРБ" in lab_data or crp > 5.0
+    has_urinary_leuko = "Лейкоциты в моче" in lab_data
+    
+    # Пневмония
+    pneumonia_score = sum([
+        2 if "Лихорадка >38°C" in symptoms and temperature > 38 else 0,
+        2 if "Кашель с мокротой" in symptoms else 1 if "Кашель" in symptoms else 0,
+        2 if "Одышка" in symptoms else 0,
+        2 if "Боль в груди" in symptoms else 0,
+        2 if has_leukocytosis else 0,
+        2 if has_elevated_crp else 0
+    ])
+    symptom_score["community_acquired_pneumonia"] = pneumonia_score
+    
+    # Ангина
+    pharyngitis_score = sum([
+        2 if "Боль в горле" in symptoms else 0,
+        2 if "Налеты на миндалинах" in symptoms else 0,
+        2 if "Лихорадка >38°C" in symptoms and temperature > 38 else 0,
+        2 if "Увеличение лимфоузлов" in symptoms else 0,
+        -2 if "Кашель" in symptoms else 1,
+        1 if "Головная боль" in symptoms else 0
+    ])
+    symptom_score["streptococcal_pharyngitis"] = pharyngitis_score
+    
+    # ИМП
+    uti_score = sum([
+        3 if "Дизурия" in symptoms else 0,
+        2 if "Учащенное мочеиспускание" in symptoms else 0,
+        2 if "Боль в надлобковой области" in symptoms else 0,
+        2 if has_urinary_leuko else 0,
+        2 if "Лихорадка >38°C" in symptoms and temperature > 38 else 0
+    ])
+    symptom_score["urinary_tract_infection"] = uti_score
+    
+    # Бронхит
+    bronchitis_score = sum([
+        2 if "Кашель" in symptoms else 0,
+        2 if "Кашель с мокротой" in symptoms else 0,
+        -2 if "Лихорадка >38°C" in symptoms and temperature > 38 else 1,
+        -2 if "Одышка" in symptoms else 1,
+        -2 if has_leukocytosis else 1,
+        1 if "Слабость" in symptoms else 0
+    ])
+    symptom_score["acute_bronchitis"] = bronchitis_score
+    
+    # Грипп
+    influenza_score = sum([
+        2 if "Лихорадка >38°C" in symptoms and temperature > 38 else 0,
+        2 if "Головная боль" in symptoms else 0,
+        2 if "Мышечные боли" in symptoms else 0,
+        2 if "Слабость" in symptoms else 0,
+        2 if "Внезапное начало" in symptoms else 0,
+        1 if "Сезонность" in symptoms else 0
+    ])
+    symptom_score["influenza"] = influenza_score
+    
+    # Гастроэнтерит
+    gastroenteritis_score = sum([
+        3 if "Тошнота" in symptoms else 0,
+        3 if "Рвота" in symptoms else 0,
+        3 if "Диарея" in symptoms else 0,
+        2 if "Боль в животе" in symptoms else 0,
+        1 if "Слабость" in symptoms else 0,
+        1 if "Субфебрильная температура" in symptoms and 37 < temperature < 38 else 0
+    ])
+    symptom_score["acute_gastroenteritis"] = gastroenteritis_score
+    
+    # Находим наиболее вероятный диагноз
+    sorted_diagnoses = sorted(symptom_score.items(), key=lambda x: x[1], reverse=True)
+    
+    return sorted_diagnoses[0][0], sorted_diagnoses
+
+# 🎯 ОСНОВНОЙ ИНТЕРФЕЙС
+def main():
+    # ЗАГОЛОВОК С АНТИБИОТИКОРЕЗИСТЕНТНОСТЬЮ
+    st.markdown("""
+    <div class="header-section">
+        <h1 style="margin:0; font-size:2.8rem; font-weight:700;">Antibiotic Stewardship System</h1>
+        <p style="font-size:1.3rem; margin:15px 0 0 0; opacity:0.9;">
+            Борьба с антибиотикорезистентностью через рациональную диагностику
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # СТАТИСТИКА ПРОБЛЕМЫ
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown("""
+        <div class="stats-box">
+            <h3 style="color:#228b22; margin:0">1.2M</h3>
+            <p style="margin:5px 0 0 0; color:#666">смертей в год от резистентности</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
+        <div class="stats-box">
+            <h3 style="color:#228b22; margin:0">50%</h3>
+            <p style="margin:5px 0 0 0; color:#666">нерациональных назначений антибиотиков</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown("""
+        <div class="stats-box">
+            <h3 style="color:#228b22; margin:0">$100T</h3>
+            <p style="margin:5px 0 0 0; color:#666">мировые потери к 2050 году</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # ОСНОВНОЙ ИНТЕРФЕЙС ДИАГНОСТИКИ
+    st.markdown("---")
+    st.header("Клиническая диагностика")
+    st.write("Система поддержки врачебных решений для рационального назначения антибиотиков")
+    
+    # ВВОД ДАННЫХ
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Клиническая картина")
+        
+        symptoms = st.multiselect(
+            "Симптомы пациента:",
+            [
+                "Лихорадка >38°C", "Озноб", "Кашель", "Кашель с мокротой", 
+                "Одышка", "Боль в груди", "Боль в горле", "Налеты на миндалинах", 
+                "Увеличение лимфоузлов", "Дизурия", "Учащенное мочеиспускание",
+                "Боль в надлобковой области", "Тошнота", "Рвота", "Диарея",
+                "Боль в животе", "Головная боль", "Мышечные боли", "Слабость",
+                "Внезапное начало", "Сезонность", "Субфебрильная температура"
+            ]
+        )
+        
+        temperature = st.slider("Температура тела (°C):", 35.0, 42.0, 37.0, 0.1)
+        
+    with col2:
+        st.subheader("Лабораторные показатели")
+        
+        wbc = st.number_input("Лейкоциты (×10⁹/л):", min_value=1.0, max_value=50.0, value=6.0, step=0.1,
+                             help="Норма: 4.0-9.0 ×10⁹/л")
+        
+        crp = st.number_input("СРБ (мг/л):", min_value=0.0, max_value=200.0, value=2.0, step=0.1,
+                             help="Норма: <5 мг/л")
+        
+        lab_data = st.multiselect(
+            "Другие результаты анализов:",
+            [
+                "Лейкоциты в моче", "Нитриты в моче", "Анализы в норме"
+            ]
+        )
+        
+        st.subheader("Артериальное давление")
+        bp_col1, bp_col2 = st.columns(2)
+        with bp_col1:
+            bp_systolic = st.number_input("Систолическое (мм рт.ст.):", 80, 250, 120)
+        with bp_col2:
+            bp_diastolic = st.number_input("Диастолическое (мм рт.ст.):", 50, 150, 80)
+    
+    # ДИАГНОСТИКА
+    if st.button("Запустить диагностику", type="primary", use_container_width=True):
+        if not symptoms:
+            st.warning("Пожалуйста, введите симптомы пациента")
+            return
+            
+        with st.spinner("Проводим анализ по клиническим рекомендациям..."):
+            # Диагностика
+            vital_signs = f"Температура: {temperature}°C, АД: {bp_systolic}/{bp_diastolic} мм рт.ст."
+            main_diagnosis, all_diagnoses = medical_diagnosis_system(
+                symptoms, lab_data, vital_signs, temperature, bp_systolic, bp_diastolic, wbc, crp
+            )
+            
+            # РЕЗУЛЬТАТЫ
+            st.markdown("---")
+            st.header("Результаты диагностики")
+            
+            # Основной диагноз
+            diagnosis_info = MEDICAL_KNOWLEDGE_BASE[main_diagnosis]
+            diagnosis_name = main_diagnosis.replace('_', ' ').title()
+            
+            st.markdown(f"""
+            <div class="diagnosis-card">
+                <h2 style="color:#2c3e50; margin:0 0 15px 0">{diagnosis_name}</h2>
+                <p><strong>Баллы диагностики:</strong> {all_diagnoses[0][1]}/10</p>
+                <p><strong>Источник рекомендаций:</strong> {diagnosis_info['source']}</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # КРИТИЧЕСКИЕ СОСТОЯНИЯ
+            if main_diagnosis == "hypertensive_crisis":
+                st.markdown("""
+                <div class="crisis-alert pulse-alert">
+                    <h3 style="margin:0; color:white">Критическое состояние!</h3>
+                    <p style="margin:10px 0 0 0; color:white; font-size:1.1rem">
+                    Немедленный вызов скорой помощи • Контроль АД каждые 15 минут • Покой, полусидячее положение
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # ЛЕЧЕНИЕ
+            st.subheader("Рекомендации по лечению")
+            
+            treatments = diagnosis_info["treatments"]
+            
+            if "antibiotics" in treatments:
+                st.markdown("""
+                <div class="antibiotic-box">
+                    <h4 style="margin:0 0 10px 0; color:#1565c0">Антибактериальная терапия</h4>
+                """, unsafe_allow_html=True)
+                for med in treatments["antibiotics"]:
+                    st.write(f"• {med}")
+                st.markdown("</div>", unsafe_allow_html=True)
+            
+            if "antivirals" in treatments:
+                st.markdown("""
+                <div class="antibiotic-box">
+                    <h4 style="margin:0 0 10px 0; color:#1565c0">Противовирусная терапия</h4>
+                """, unsafe_allow_html=True)
+                for med in treatments["antivirals"]:
+                    st.write(f"• {med}")
+                st.markdown("</div>", unsafe_allow_html=True)
+            
+            if "antibiotics" not in treatments and "Антибиотики НЕ ПОКАЗАНЫ" in str(treatments.get("antibiotics", [])):
+                st.markdown("""
+                <div class="no-antibiotic-box">
+                    <h4 style="margin:0 0 10px 0; color:#2e7d32">Рациональная антибиотикотерапия</h4>
+                    <p style="margin:0; font-weight:500">Антибиотики не показаны - сохранение эффективности препаратов для будущих поколений</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # СИМПТОМАТИЧЕСКОЕ ЛЕЧЕНИЕ
+            if "symptomatic" in treatments or "supportive" in treatments or "rehydration" in treatments:
+                st.markdown("""
+                <div class="stats-box">
+                    <h4 style="margin:0 0 15px 0; color:#2c3e50">Симптоматическое и вспомогательное лечение</h4>
+                """, unsafe_allow_html=True)
+                
+                if "symptomatic" in treatments:
+                    st.write("**Симптоматическое:**")
+                    for med in treatments["symptomatic"]:
+                        st.write(f"• {med}")
+                
+                if "supportive" in treatments:
+                    st.write("**Вспомогательное:**")
+                    for action in treatments["supportive"]:
+                        st.write(f"• {action}")
+                
+                if "rehydration" in treatments:
+                    st.write("**Регидратация:**")
+                    for med in treatments["rehydration"]:
+                        st.write(f"• {med}")
+                
+                st.markdown("</div>", unsafe_allow_html=True)
+            
+            # НАПРАВЛЕНИЯ
+            st.markdown("""
+            <div class="stats-box">
+                <h4 style="margin:0 0 10px 0; color:#2c3e50">Дальнейшие действия</h4>
+                <p style="margin:0">{}</p>
+            </div>
+            """.format(diagnosis_info["referral"]), unsafe_allow_html=True)
+            
+            # ДИФФЕРЕНЦИАЛЬНАЯ ДИАГНОСТИКА
+            st.subheader("Дифференциальная диагностика")
+            for i, (diagnosis, score) in enumerate(all_diagnoses[1:4], 1):
+                diag_name = diagnosis.replace('_', ' ').title()
+                st.write(f"{i}. **{diag_name}** ({score} баллов)")
+    
+    # БОКОВАЯ ПАНЕЛЬ
+    with st.sidebar:
+        st.markdown("""
+        <div class="sidebar-section">
+            <h3 style="margin:0 0 15px 0">О системе</h3>
+            <p style="margin:0 0 15px 0; color:#666">
+            Образовательная платформа для борьбы с антибиотикорезистентностью 
+            через рациональную диагностику и назначение терапии.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="sidebar-section">
+            <h4 style="margin:0 0 12px 0">Диагностируемые состояния</h4>
+            <ul style="margin:0; padding-left:20px; color:#666">
+            <li>Пневмония</li>
+            <li>Стрептококковая ангина</li>
+            <li>Инфекции мочевых путей</li>
+            <li>Острый бронхит</li>
+            <li>Грипп</li>
+            <li>Острый гастроэнтерит</li>
+            <li>Гипертонический криз</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="sidebar-section">
+            <h4 style="margin:0 0 12px 0; color:#d32f2f">Важно</h4>
+            <p style="margin:0; color:#666; font-size:0.9rem">
+            Данная система предназначена для образовательных целей 
+            и не заменяет консультацию врача. При критических состояниях 
+            немедленно обращайтесь за медицинской помощью.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main()
