@@ -293,7 +293,7 @@ def main():
     col1, col2 = st.columns([1, 4])
     with col1:
         # 👇 МЕСТО ДЛЯ ТВОЕГО ЛОГОТИПА
-        # st.image("logo.png", width=80)
+        st.image("logo.png", width=80)
         st.info("📍 Место для логотипа")
     with col2:
         st.markdown("""
@@ -554,3 +554,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
